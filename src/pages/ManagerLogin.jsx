@@ -9,6 +9,7 @@ import { ReadyNormLogoText } from "@/components/brand/ReadyNormLogo";
 import { Loader2, Mail, Lock, ArrowLeft } from "lucide-react";
 
 export default function ManagerLogin() {
+  const APP_URL = "https://readynorm.app";
   const [mode, setMode] = useState("signin"); // signin | signup | magic | forgot | reset
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -103,7 +104,10 @@ export default function ManagerLogin() {
     const { error: err } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName } },
+      options: {
+        data: { full_name: fullName },
+        emailRedirectTo: `${APP_URL}/ManagerLogin`,
+      },
     });
     setLoading(false);
     if (err) {
@@ -120,7 +124,7 @@ export default function ManagerLogin() {
     setError(null);
     const { error: err } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${window.location.origin}${nextUrl}` },
+      options: { emailRedirectTo: `${APP_URL}${nextUrl}` },
     });
     setLoading(false);
     if (err) {
@@ -284,7 +288,7 @@ export default function ManagerLogin() {
               setError(null);
               try {
                 const { data, error: supabaseError } = await supabase.auth.resetPasswordForEmail(email, {
-                  redirectTo: `${window.location.origin}/ManagerLogin?mode=reset`,
+                  redirectTo: `${APP_URL}/ManagerLogin?mode=reset`,
                 });
                 if (supabaseError) {
                   setError(supabaseError.message);
