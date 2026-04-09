@@ -352,10 +352,10 @@ export default function Home() {
           window.location.href = createPageUrl("ManagerDashboard");
         }
       } else {
-        window.location.href = "/.auth/login?redirectTo=" + encodeURIComponent(window.location.pathname);
+        window.location.href = "/ManagerLogin";
       }
     } catch (e) {
-      window.location.href = "/.auth/login?redirectTo=" + encodeURIComponent(window.location.pathname);
+      window.location.href = "/ManagerLogin";
     }
   };
 
@@ -517,10 +517,10 @@ export default function Home() {
                       setCurrentUser(user);
                       setShowOrgSetup(true);
                     } else {
-                      window.location.href = "/.auth/login?redirectTo=" + encodeURIComponent(window.location.pathname);
+                      window.location.href = "/ManagerLogin";
                     }
                   } catch (e) {
-                    window.location.href = "/.auth/login?redirectTo=" + encodeURIComponent(window.location.pathname);
+                    window.location.href = "/ManagerLogin";
                   }
                 }}
                 size="lg"

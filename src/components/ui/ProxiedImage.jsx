@@ -1,7 +1,6 @@
 /**
  * ProxiedImage — drop-in <img> replacement.
- * Routes media.base44.com images through the backend proxy
- * so they load on corporate networks where base44.com is blocked.
+ * Maps legacy media URLs to local ReadyNorm assets.
  */
 
 import { getProxiedImageUrl } from "@/lib/imageProxy";

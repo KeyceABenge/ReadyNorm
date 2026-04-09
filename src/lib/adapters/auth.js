@@ -199,7 +199,7 @@ export function redirectToLogin(nextUrl) {
  * Send a magic link to the given email.
  */
 export async function sendMagicLink(email) {
-  const redirectTo = `${window.location.origin}/`;
+  const redirectTo = "https://readynorm.app/";
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: { emailRedirectTo: redirectTo }

@@ -1,8 +1,7 @@
 /**
  * File proxy utilities — Supabase Edge Functions.
- * Routes media.base44.com URLs through the app's own fileProxy Edge Function
- * so they work on corporate networks where base44.com is blocked.
- * All other URLs pass through unchanged.
+ * Maps legacy media URLs (from old Base44 hosting) to local assets.
+ * New files from Supabase Storage pass through unchanged.
  */
 
 const SUPABASE_URL = "https://zamrusolomzustgenpin.supabase.co";
