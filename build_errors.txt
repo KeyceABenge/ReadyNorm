@@ -1,0 +1,30 @@
+
+> readynorm@0.0.0 build
+> vite build
+
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+Browserslist: browsers data (caniuse-lite) is 7 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+✗ Build failed in 3.08s
+error during build:
+src/pages/CalibrationTracking.jsx (3:9): "CalibrationEquipmentRepo" is not exported by "src/lib/adapters/database.js", imported by "src/pages/CalibrationTracking.jsx".
+file: /Users/keycebenge/Library/Mobile Documents/com~apple~CloudDocs/readynorm-local/src/pages/CalibrationTracking.jsx:3:9
+
+1: import { useState } from "react";
+2: import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+3: import { CalibrationEquipmentRepo, CalibrationRecordRepo } from "@/lib/adapters/database";
+            ^
+4: import useOrganization from "@/components/auth/useOrganization";
+5: import { Card, CardContent } from "@/components/ui/card";
+
+    at getRollupError (file:///Users/keycebenge/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/readynorm-local/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+    at error (file:///Users/keycebenge/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/readynorm-local/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
+    at Module.error (file:///Users/keycebenge/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/readynorm-local/node_modules/rollup/dist/es/shared/node-entry.js:16960:16)
+    at Module.traceVariable (file:///Users/keycebenge/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/readynorm-local/node_modules/rollup/dist/es/shared/node-entry.js:17412:29)
+    at ModuleScope.findVariable (file:///Users/keycebenge/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/readynorm-local/node_modules/rollup/dist/es/shared/node-entry.js:15082:39)
+    at FunctionScope.findVariable (file:///Users/keycebenge/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/readynorm-local/node_modules/rollup/dist/es/shared/node-entry.js:5642:38)
+    at FunctionBodyScope.findVariable (file:///Users/keycebenge/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/readynorm-local/node_modules/rollup/dist/es/shared/node-entry.js:5642:38)
+    at ReturnValueScope.findVariable (file:///Users/keycebenge/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/readynorm-local/node_modules/rollup/dist/es/shared/node-entry.js:5642:38)
+    at FunctionBodyScope.findVariable (file:///Users/keycebenge/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/readynorm-local/node_modules/rollup/dist/es/shared/node-entry.js:5642:38)
+    at MemberExpression.bind (file:///Users/keycebenge/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/readynorm-local/node_modules/rollup/dist/es/shared/node-entry.js:7349:49)

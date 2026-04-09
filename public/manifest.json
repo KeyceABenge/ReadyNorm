@@ -1,0 +1,16 @@
+{
+  "name": "ReadyNorm",
+  "short_name": "ReadyNorm",
+  "description": "ReadyNorm sanitation and quality operations platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/readynorm-favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

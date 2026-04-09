@@ -1,0 +1,165 @@
+import { createClient } from 'npm:@supabase/supabase-js@2.49.4';
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey',
+      },
+    });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+    const authHeader = req.headers.get('authorization') || '';
+    const token = authHeader.replace('Bearer ', '');
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !authUser) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { data: profile } = await supabase
+      .from('User')
+      .select('*')
+      .eq('email', authUser.email)
+      .single();
+
+    const user = {
+      email: authUser.email,
+      role: profile?.role || 'user',
+    };
+
+    if (user.role !== 'admin') {
+      const { data: memberships } = await supabase
+        .from('org_group_memberships')
+        .select('*')
+        .eq('user_email', user.email)
+        .eq('status', 'active');
+      const hasManagerRole = (memberships || []).some((m: any) =>
+        ['org_owner', 'org_manager', 'site_manager'].includes(m.role)
+      );
+      if (!hasManagerRole) {
+        return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+      }
+    }
+
+    const { organization_id } = await req.json();
+
+    if (!organization_id) {
+      return Response.json({ error: 'organization_id is required' }, { status: 400 });
+    }
+
+    const { data: orgs } = await supabase
+      .from('organizations')
+      .select('*')
+      .eq('id', organization_id);
+    const org = orgs?.[0];
+    const siteCode = org?.site_code;
+
+    const usersMap = new Map();
+
+    if (org?.org_group_id) {
+      const { data: memberships } = await supabase
+        .from('org_group_memberships')
+        .select('*')
+        .eq('org_group_id', org.org_group_id)
+        .eq('status', 'active');
+
+      const relevantMemberships = (memberships || []).filter((m: any) => {
+        if (m.site_access_type === "all") return true;
+        if (m.site_access_type === "selected" && m.allowed_site_ids?.includes(organization_id)) return true;
+        return false;
+      });
+
+      for (const membership of relevantMemberships) {
+        if (!usersMap.has(membership.user_email)) {
+          usersMap.set(membership.user_email, {
+            id: membership.id,
+            full_name: membership.user_name || membership.user_email,
+            email: membership.user_email,
+            role: membership.role || 'manager',
+            type: 'manager',
+            created_date: membership.created_date,
+          });
+        }
+      }
+    }
+
+    const { data: directUsers } = await supabase
+      .from('User')
+      .select('*')
+      .eq('organization_id', organization_id);
+
+    for (const u of (directUsers || [])) {
+      if (!usersMap.has(u.email)) {
+        usersMap.set(u.email, {
+          id: u.id,
+          full_name: u.full_name || u.email,
+          email: u.email,
+          role: u.role || 'user',
+          type: 'manager',
+          created_date: u.created_date,
+        });
+      }
+    }
+
+    const { data: approvedRequests } = await supabase
+      .from('access_requests')
+      .select('*')
+      .eq('organization_id', organization_id)
+      .eq('status', 'approved');
+
+    let approvedBySiteCode: any[] = [];
+    if (siteCode) {
+      const { data } = await supabase
+        .from('access_requests')
+        .select('*')
+        .eq('site_code', siteCode)
+        .eq('status', 'approved');
+      approvedBySiteCode = data || [];
+    }
+
+    const allApproved = [...(approvedRequests || [])];
+    for (const ar of approvedBySiteCode) {
+      if (!allApproved.find((a: any) => a.id === ar.id)) {
+        allApproved.push(ar);
+      }
+    }
+
+    const approvedByEmail = new Map();
+    for (const ar of allApproved) {
+      const existing = approvedByEmail.get(ar.requester_email);
+      if (!existing || new Date(ar.reviewed_at) > new Date(existing.reviewed_at)) {
+        approvedByEmail.set(ar.requester_email, ar);
+      }
+    }
+
+    for (const [email, ar] of approvedByEmail) {
+      if (!usersMap.has(email)) {
+        usersMap.set(email, {
+          id: ar.id,
+          full_name: ar.requester_name || email,
+          email: email,
+          role: ar.requested_role || 'employee',
+          type: 'approved_access',
+          approved_at: ar.reviewed_at,
+          approved_by: ar.reviewed_by,
+          created_date: ar.created_date,
+        });
+      }
+    }
+
+    const users = Array.from(usersMap.values());
+    return Response.json({ users });
+  } catch (error) {
+    return Response.json({ error: (error as Error).message }, { status: 500 });
+  }
+});
