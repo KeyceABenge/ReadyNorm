@@ -242,14 +242,34 @@ export default function Home() {
               setOrganization(orgs[0]);
               localStorage.setItem('site_code', code);
 
-              // Manager/owner bypass:
-              // - explicit admin role
-              // - email matches created_by (new Supabase orgs)
-              // - resolvedViaOwnership: found this org via org group owner_email or created_by lookup
-              //   (covers legacy orgs where created_by was stored as a Base44 ObjectId)
+              // ── Ownership resolution (runs even when site_code was already cached) ──
+              // The 5 paths above only run when code was missing, so resolvedViaOwnership
+              // is always false for returning users. We re-check here against the resolved org.
+              if (userData && !resolvedViaOwnership) {
+                // Case-insensitive created_by match (handles email casing differences)
+                if (orgs[0].created_by && userData.email.toLowerCase() === orgs[0].created_by.toLowerCase()) {
+                  resolvedViaOwnership = true;
+                }
+                // Check org group owner_email
+                if (!resolvedViaOwnership && orgs[0].org_group_id) {
+                  try {
+                    const ownedGroups = await OrganizationGroupRepo.filter({ owner_email: userData.email });
+                    if (ownedGroups.some(g => g.id === orgs[0].org_group_id)) {
+                      resolvedViaOwnership = true;
+                    }
+                  } catch (_) {}
+                }
+                // Fallback: trust previously confirmed manager role stored in localStorage.
+                // This covers the case where the user was correctly verified as manager on a
+                // previous visit (site_role was set) but created_by/org_group checks fail
+                // (e.g., legacy data, migrated org, null field).
+                if (!resolvedViaOwnership && localStorage.getItem("site_role") === "manager") {
+                  resolvedViaOwnership = true;
+                }
+              }
+
               const isManager = userData && (
                 userData.role === "admin" ||
-                userData.email === orgs[0].created_by ||
                 resolvedViaOwnership
               );
               
