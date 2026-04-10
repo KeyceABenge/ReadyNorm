@@ -47,6 +47,7 @@ export default function Home() {
   const [managerAccessStatus, setManagerAccessStatus] = useState(null); // null, "pending", "approved", "denied"
   const [managerRequest, setManagerRequest] = useState(null);
   const [showCreateOrg, setShowCreateOrg] = useState(false);
+  const [authResolved, setAuthResolved] = useState(false); // true once initializeSite finishes auth check
   const { logEvent } = useSecurityLogger();
 
   // Check if current site belongs to an org group
@@ -253,10 +254,14 @@ export default function Home() {
               );
               
               if (isManager) {
-                console.log("✓ User is manager/owner - auto-granting access");
+                console.log("✓ User is manager/owner - redirecting to dashboard");
                 setAccessStatus("approved");
                 localStorage.setItem("site_role", "manager");
                 setChosenRole("manager");
+                // Authenticated managers should never stay on Home — send them straight to the dashboard.
+                // This eliminates the back-arrow "Request Access" trap.
+                window.location.replace("/ManagerDashboard");
+                return;
               } else {
                 // Check access request — first by device_id, then fall back to email if authenticated
                 try {
@@ -319,6 +324,7 @@ export default function Home() {
         console.error("Initialization error:", e);
       } finally {
         setIsLoading(false);
+        setAuthResolved(true);
       }
     };
     
@@ -543,8 +549,10 @@ export default function Home() {
     );
   }
 
-  // Has a pending/denied request — show the access request form
-  if (accessStatus !== "approved") {
+  // Has a pending/denied request — show the access request form.
+  // IMPORTANT: only render this after auth has fully resolved AND the status is explicitly
+  // a non-approved value. Never show it while accessStatus is still null (loading).
+  if (authResolved && siteCode && accessStatus !== null && accessStatus !== "approved") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-orange-50 flex items-center justify-center p-4">
         <div className="max-w-lg w-full">
