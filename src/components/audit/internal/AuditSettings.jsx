@@ -39,7 +39,7 @@ export default function AuditSettings({ organization }) {
     queryKey: ["audit_settings", organization?.id],
     queryFn: async () => {
       // Store settings in SiteSettings or a dedicated entity
-      const siteSettings = await SiteSettingsRepo.list();
+      const siteSettings = await SiteSettingsRepo.filter({ organization_id: organization?.id });
       if (siteSettings.length > 0 && siteSettings[0].audit_settings) {
         return siteSettings[0].audit_settings;
       }
@@ -57,7 +57,7 @@ export default function AuditSettings({ organization }) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const siteSettings = await SiteSettingsRepo.list();
+      const siteSettings = await SiteSettingsRepo.filter({ organization_id: organization?.id });
       if (siteSettings.length > 0) {
         await SiteSettingsRepo.update(siteSettings[0].id, {
           audit_settings: settings

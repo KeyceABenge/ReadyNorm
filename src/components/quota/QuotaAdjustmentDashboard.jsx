@@ -43,8 +43,9 @@ export default function QuotaAdjustmentDashboard({ organizationId, fatigueSignal
   });
 
   const { data: siteSettings = [] } = useQuery({
-    queryKey: ["quota_settings"],
-    queryFn: () => SiteSettingsRepo.list()
+    queryKey: ["quota_settings", organizationId],
+    queryFn: () => SiteSettingsRepo.filter({ organization_id: organizationId }),
+    enabled: !!organizationId
   });
 
   const { data: trainings = [] } = useQuery({

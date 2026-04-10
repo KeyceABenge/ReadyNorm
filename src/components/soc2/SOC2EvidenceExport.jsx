@@ -156,7 +156,7 @@ Be factual and audit-appropriate.`,
         gaps_and_exceptions: gaps
       };
 
-      const created = await SOC2EvidencePackageRepo.create(packageData);
+      const created = await EvidencePackageRepo.create(packageData);
       onPackageCreated?.(created);
 
     } catch (error) {

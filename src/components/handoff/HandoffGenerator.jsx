@@ -60,8 +60,9 @@ export default function HandoffGenerator({ organizationId, settings, onGenerated
   });
 
   const { data: siteSettings = [] } = useQuery({
-    queryKey: ["site_settings"],
-    queryFn: () => SiteSettingsRepo.list(),
+    queryKey: ["site_settings", organizationId],
+    queryFn: () => SiteSettingsRepo.filter({ organization_id: organizationId }),
+    enabled: !!organizationId,
     ...queryConfig
   });
 

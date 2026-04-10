@@ -102,8 +102,9 @@ export default function EmployeeScheduleGrid({ employees, crewSchedules, employe
 
   // Load groups from query
   const { data: groupsData = [] } = useQuery({
-    queryKey: ["employee_groups"],
-    queryFn: () => EmployeeGroupRepo.list()
+    queryKey: ["employee_groups", organizationId],
+    queryFn: () => EmployeeGroupRepo.filter({ organization_id: organizationId }),
+    enabled: !!organizationId
   });
 
   useEffect(() => {

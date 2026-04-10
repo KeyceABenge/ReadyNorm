@@ -23,8 +23,9 @@ export default function SSOPGeneratorModal({ organizationId, assets, onClose, on
   const [isGenerating, setIsGenerating] = useState(false);
 
   const { data: siteSettings = [] } = useQuery({
-    queryKey: ["ssop_settings"],
-    queryFn: () => SiteSettingsRepo.list()
+    queryKey: ["ssop_settings", organizationId],
+    queryFn: () => SiteSettingsRepo.filter({ organization_id: organizationId }),
+    enabled: !!organizationId
   });
 
   const { data: areas = [] } = useQuery({

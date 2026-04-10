@@ -138,11 +138,6 @@ const TABLE_MAP = {
   ProcessStep: "process_steps",
   ReceivingInspection: "receiving_inspections",
   RiskEntry: "risk_entries",
-  SOC2Control: "soc2_controls",
-  SOC2Evidence: "soc2_evidence",
-  SOC2Policy: "soc2_policies",
-  SOC2Risk: "soc2_risks",
-  SOC2Vendor: "soc2_vendors",
   ScheduledAudit: "scheduled_audits",
   VisitorLog: "visitor_logs",
   // Supplier management

@@ -14,7 +14,7 @@ export default function LineCleaningCard({ assignment, line, areas, assets, asse
 
   const { data: fetchedLine } = useQuery({
     queryKey: ["production_line", assignment?.production_line_id],
-    queryFn: () => ProductionLineRepo.list().then(lines => lines.find(l => l.id === assignment.production_line_id)),
+    queryFn: () => ProductionLineRepo.filter({ id: assignment.production_line_id }).then(lines => lines[0]),
     enabled: !!assignment?.production_line_id && !line?.name
   });
 
