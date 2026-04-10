@@ -1067,21 +1067,40 @@ export default function LineCleaningAssignments() {
                     <span>•</span>
                     <span>{assignment.assets_snapshot.length} assets</span>
                   </div>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-violet-50 text-violet-700 rounded-full text-xs border border-violet-200 font-medium">
-                      <Users className="w-3 h-3" />
-                      Crew: {assignment.total_crew_size || '—'}
-                    </span>
-                    {assignment.employee_counts && assignment.areas_snapshot.map(area => {
-                      const count = assignment.employee_counts[area.id];
-                      if (!count) return null;
-                      return (
-                        <span key={area.id} className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-50 text-slate-600 rounded-full text-xs border border-slate-200">
-                          {area.name}: {count}p
+                  {(() => {
+                    // Derive effective per-area worker counts from simulation.
+                    // For sequential areas this equals total_crew_size; for concurrent areas
+                    // it reflects the actual split. Raw employee_counts stores 1 for all
+                    // sequential areas so we never read it directly for display.
+                    const crew = assignment.total_crew_size || 1;
+                    const { areaTimeline } = computeAreaTimeline(
+                      assignment.areas_snapshot,
+                      assignment.assets_snapshot,
+                      assignment.employee_counts || {},
+                      crew
+                    );
+                    const simCountMap = {};
+                    areaTimeline.forEach(a => {
+                      const initialWorkers = a.segments?.[0]?.workers ?? a.employeeCount;
+                      simCountMap[a.id] = initialWorkers;
+                    });
+                    return (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-violet-50 text-violet-700 rounded-full text-xs border border-violet-200 font-medium">
+                          <Users className="w-3 h-3" />
+                          Crew: {crew}
                         </span>
-                      );
-                    })}
-                  </div>
+                        {assignment.areas_snapshot.map(area => {
+                          const count = simCountMap[area.id] ?? crew;
+                          return (
+                            <span key={area.id} className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-50 text-slate-600 rounded-full text-xs border border-slate-200">
+                              {area.name}: {count}p
+                            </span>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </Card>

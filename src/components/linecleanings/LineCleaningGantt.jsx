@@ -640,7 +640,7 @@ export default function LineCleaningGantt({
                                         <div className="flex items-center px-1.5 min-w-0 overflow-hidden">
                                           <div className="min-w-0 overflow-hidden leading-none">
                                             <p className={cn("text-[10px] font-semibold truncate", color.text)}>{block.name}</p>
-                                            <p className={cn("text-[8px] truncate opacity-70", color.text)}>{Math.round(block.effectiveHours * 60)}m · Assign {block.employeeCount} people</p>
+                                            <p className={cn("text-[8px] truncate opacity-70", color.text)}>{Math.round(block.effectiveHours * 60)}m · {block.segments?.[0]?.workers ?? block.employeeCount}p</p>
                                           </div>
                                         </div>
                                       )}
