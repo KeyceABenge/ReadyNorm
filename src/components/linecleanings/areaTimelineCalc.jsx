@@ -6,10 +6,10 @@
  * - `employeeCounts` gives the INITIAL distribution for areas that start together.
  * - When an area finishes, its workers are immediately freed and redistributed
  *   to still-running areas, proportionally reducing their remaining duration.
- * - Locked hours on an asset are always 1-person and can't be parallelized.
- *   (e.g. 2 hours locked = 2 hours regardless of worker count)
- * - Divisible hours scale linearly with workers: time = hours / workers
- * - An area's finish time = max(remainingLocked, remainingDivisible / workers)
+ * - Sequential areas: ALL hours scale linearly with workers.
+ *   time = totalHours / workers  (4 people on a 4h job = 1h)
+ * - Concurrent areas: locked assets get 1 worker (can't be parallelized);
+ *   remaining workers split across unlocked areas proportionally.
  *
  * Returns { areaTimeline, totalHours }
  *   areaTimeline: array of { id, name, seq, effectiveHours, employeeCount, startHour, endHour, segments }
@@ -84,12 +84,13 @@ export function computeAreaTimeline(areasSnapshot, assetsSnapshot, employeeCount
 
     if (group.length === 1) {
       const a = group[0];
-      const lockedDominates = a.isFullyLocked || (a.lockedHours > 0 && a.lockedHours >= a.divisibleHours);
-      const w = lockedDominates ? 1 : workersToUse;
+      // Linear model: all hours (locked + divisible) scale with workers.
+      // time = rawHours / workers — 4 people on a 4h job = 1h, always.
       active.push({
-        ...a, startHour: time, workers: w,
-        remainingDivisible: a.divisibleHours, remainingLocked: a.lockedHours,
-        segments: [{ startHour: time, endHour: null, workers: w }],
+        ...a, startHour: time, workers: workersToUse,
+        remainingDivisible: a.rawHours,
+        remainingLocked: 0,
+        segments: [{ startHour: time, endHour: null, workers: workersToUse }],
       });
       return;
     }
