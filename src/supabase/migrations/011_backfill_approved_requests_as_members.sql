@@ -2,10 +2,94 @@
 -- ReadyNorm — Migration 011: Backfill approved access requests as org members
 --             + directly patch access_requests RLS
 --
--- Type-safe version: all cross-table comparisons cast BOTH sides to ::text
--- to avoid "operator does not exist: text = uuid" regardless of whether
--- org_group_memberships.org_group_id is TEXT or UUID in the actual database.
+-- Uses IN (subquery) instead of JOINs inside EXISTS subqueries to avoid the
+-- "syntax error at or near JOIN" that some Postgres versions produce when
+-- parsing JOINs inside CREATE POLICY USING/WITH CHECK expressions.
 -- =============================================================================
+
+-- ── 1. Patch access_requests RLS ─────────────────────────────────────────────
+ALTER TABLE access_requests ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS access_requests_all_access ON access_requests;
+DROP POLICY IF EXISTS access_requests_access     ON access_requests;
+
+CREATE POLICY access_requests_access ON access_requests
+  FOR ALL TO authenticated
+  USING (
+    LOWER(requester_email) = LOWER(auth.email())
+    OR auth_can_access_org(organization_id)
+    OR EXISTS (
+      SELECT 1 FROM organization_groups og
+      WHERE LOWER(og.owner_email) = LOWER(auth.email())
+        AND og.id::text IN (
+          SELECT org_group_id::text FROM organizations
+          WHERE id::text = access_requests.organization_id::text
+        )
+    )
+    OR EXISTS (
+      SELECT 1 FROM org_group_memberships m
+      WHERE LOWER(m.user_email) = LOWER(auth.email())
+        AND m.status = 'active'
+        AND m.role IN ('org_owner', 'org_manager', 'site_manager')
+        AND m.org_group_id::text IN (
+          SELECT org_group_id::text FROM organizations
+          WHERE id::text = access_requests.organization_id::text
+        )
+    )
+  )
+  WITH CHECK (
+    LOWER(requester_email) = LOWER(auth.email())
+    OR auth_can_access_org(organization_id)
+    OR EXISTS (
+      SELECT 1 FROM organization_groups og
+      WHERE LOWER(og.owner_email) = LOWER(auth.email())
+        AND og.id::text IN (
+          SELECT org_group_id::text FROM organizations
+          WHERE id::text = access_requests.organization_id::text
+        )
+    )
+    OR EXISTS (
+      SELECT 1 FROM org_group_memberships m
+      WHERE LOWER(m.user_email) = LOWER(auth.email())
+        AND m.status = 'active'
+        AND m.role IN ('org_owner', 'org_manager', 'site_manager')
+        AND m.org_group_id::text IN (
+          SELECT org_group_id::text FROM organizations
+          WHERE id::text = access_requests.organization_id::text
+        )
+    )
+  );
+
+-- ── 2. Backfill org_group_memberships for approved access requests ───────────
+INSERT INTO org_group_memberships
+  (org_group_id, user_email, user_name, role, site_access_type, status)
+SELECT
+  o.org_group_id::text,
+  ar.requester_email,
+  COALESCE(ar.requester_name, split_part(ar.requester_email, '@', 1)),
+  CASE
+    WHEN ar.requested_role = 'manager' THEN 'org_manager'
+    WHEN ar.requested_role IS NOT NULL  THEN ar.requested_role
+    ELSE 'org_manager'
+  END,
+  'all',
+  'active'
+FROM access_requests ar,
+     organizations o
+WHERE o.id::text = ar.organization_id::text
+  AND ar.status = 'approved'
+  AND ar.requester_email IS NOT NULL
+  AND o.org_group_id IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM org_group_memberships m
+    WHERE m.org_group_id::text  = o.org_group_id::text
+      AND LOWER(m.user_email)   = LOWER(ar.requester_email)
+  )
+ON CONFLICT DO NOTHING;
+
+-- =============================================================================
+-- DONE.
+-- =============================================================================
+
 
 -- ── 1. Patch access_requests RLS — add direct org-owner + manager check ──────
 ALTER TABLE access_requests ENABLE ROW LEVEL SECURITY;
