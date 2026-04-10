@@ -801,12 +801,12 @@ function DrainFormModal({ open, onClose, drain, areas, onSave, isLoading }) {
           </div>
           <div>
             <Label>Area (Optional)</Label>
-            <Select value={formData.area_id} onValueChange={handleAreaChange}>
+            <Select value={formData.area_id || "__none__"} onValueChange={(v) => handleAreaChange(v === "__none__" ? "" : v)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select area" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={null}>No area</SelectItem>
+                <SelectItem value="__none__">No area</SelectItem>
                 {areas.map(area => (
                   <SelectItem key={area.id} value={area.id}>{area.name}</SelectItem>
                 ))}

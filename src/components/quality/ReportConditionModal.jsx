@@ -97,14 +97,14 @@ export default function ReportConditionModal({
           <div>
             <Label>Production Line (Optional)</Label>
             <Select 
-              value={formData.production_line_id} 
-              onValueChange={(value) => setFormData(prev => ({ ...prev, production_line_id: value, area_id: "" }))}
+              value={formData.production_line_id || "__none__"} 
+              onValueChange={(value) => setFormData(prev => ({ ...prev, production_line_id: value === "__none__" ? "" : value, area_id: "" }))}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select line" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={null}>None</SelectItem>
+                <SelectItem value="__none__">None</SelectItem>
                 {productionLines.map(line => (
                   <SelectItem key={line.id} value={line.id}>{line.name}</SelectItem>
                 ))}
@@ -116,14 +116,14 @@ export default function ReportConditionModal({
             <div>
               <Label>Area (Optional)</Label>
               <Select 
-                value={formData.area_id} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, area_id: value }))}
+                value={formData.area_id || "__none__"} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, area_id: value === "__none__" ? "" : value }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select area" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={null}>None</SelectItem>
+                  <SelectItem value="__none__">None</SelectItem>
                   {selectedLineAreas.map(area => (
                     <SelectItem key={area.id} value={area.id}>{area.name}</SelectItem>
                   ))}

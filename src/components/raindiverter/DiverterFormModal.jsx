@@ -199,7 +199,7 @@ export default function DiverterFormModal({
                   <SelectValue placeholder="Select line" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="__none__">None</SelectItem>
                   {productionLines.filter(l => l.id).map(l => (
                     <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
                   ))}

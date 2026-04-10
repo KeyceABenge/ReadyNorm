@@ -272,12 +272,12 @@ export default function SDSFormModal({ open, onOpenChange, sds, chemicals, onSav
           {chemicals.length > 0 && (
             <div className="space-y-2">
               <Label>Link to Chemical (Optional)</Label>
-              <Select value={formData.chemical_id} onValueChange={handleChemicalSelect}>
+              <Select value={formData.chemical_id || "__none__"} onValueChange={(v) => handleChemicalSelect(v === "__none__" ? null : v)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select existing chemical" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={null}>None</SelectItem>
+                  <SelectItem value="__none__">None</SelectItem>
                   {chemicals.map(c => (
                     <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                   ))}
