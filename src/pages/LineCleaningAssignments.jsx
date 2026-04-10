@@ -751,9 +751,9 @@ export default function LineCleaningAssignments() {
                               </div>
 
                               {/* Timing Timeline */}
-                              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                 {/* 1. Line Goes Down */}
-                                <div className="col-span-2 lg:col-span-1 p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                                <div className="col-span-2 sm:col-span-1 p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
                                   <div className="flex items-center gap-1.5">
                                     <div className="w-2 h-2 rounded-full bg-red-400" />
                                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Line Goes Down</span>
@@ -822,7 +822,7 @@ export default function LineCleaningAssignments() {
                                       type="number"
                                       value={assignment.duration_minutes}
                                       onChange={(e) => handleDurationChange(index, e.target.value)}
-                                      className="w-16 h-9 rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-sm text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent"
+                                      className="w-20 h-9 rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-sm text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent"
                                       min="1"
                                     />
                                     <span className="text-xs text-slate-400 font-medium">min</span>
