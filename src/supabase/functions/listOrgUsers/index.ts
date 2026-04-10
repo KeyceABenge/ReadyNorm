@@ -41,18 +41,24 @@ Deno.serve(async (req) => {
       .eq('id', organization_id);
     const org = orgs?.[0];
 
+    // Debug: log caller + org info to Supabase function logs
+    console.log('[listOrgUsers] callerEmail:', callerEmail);
+    console.log('[listOrgUsers] org_id:', organization_id, '| created_by:', org?.created_by, '| org_group_id:', org?.org_group_id);
+
     // Authorization: caller must be the org creator OR an active member of the
     // org_group that owns this org with a manager-level role OR the owner of
     // any organization_group (handles legacy orgs where created_by/org_group_id
     // were never backfilled).
-    const isOrgCreator = org?.created_by?.toLowerCase() === callerEmail.toLowerCase();
+    // NOTE: all email comparisons are case-insensitive.
+    const isOrgCreator = !!org?.created_by && org.created_by.toLowerCase() === callerEmail.toLowerCase();
     let isOrgMember = false;
     if (!isOrgCreator && org?.org_group_id) {
+      // ilike = case-insensitive exact match (no wildcards)
       const { data: callerMemberships } = await supabase
         .from('org_group_memberships')
         .select('role')
         .eq('org_group_id', org.org_group_id)
-        .eq('user_email', callerEmail)
+        .filter('user_email', 'ilike', callerEmail)
         .eq('status', 'active');
       isOrgMember = (callerMemberships || []).some((m: any) =>
         ['org_owner', 'org_manager', 'site_manager'].includes(m.role)
@@ -66,11 +72,14 @@ Deno.serve(async (req) => {
       const { data: ownedGroups } = await supabase
         .from('organization_groups')
         .select('id')
-        .eq('owner_email', callerEmail);
+        .filter('owner_email', 'ilike', callerEmail);
       isOrgGroupOwner = (ownedGroups || []).length > 0;
+      console.log('[listOrgUsers] isOrgGroupOwner:', isOrgGroupOwner, '| ownedGroups count:', ownedGroups?.length ?? 0);
     }
+    console.log('[listOrgUsers] auth result — isOrgCreator:', isOrgCreator, '| isOrgMember:', isOrgMember, '| isOrgGroupOwner:', isOrgGroupOwner);
     if (!isOrgCreator && !isOrgMember && !isOrgGroupOwner) {
-      return Response.json({ error: 'Forbidden' }, { status: 403 });
+      console.log('[listOrgUsers] FORBIDDEN — returning 403');
+      return Response.json({ error: 'Forbidden', debug: { callerEmail, created_by: org?.created_by, org_group_id: org?.org_group_id } }, { status: 403 });
     }
     const siteCode = org?.site_code;
 
@@ -167,11 +176,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { data: approvedRequests } = await supabase
+    const { data: approvedRequests, error: arError } = await supabase
       .from('access_requests')
       .select('*')
       .eq('organization_id', organization_id)
       .eq('status', 'approved');
+    console.log('[listOrgUsers] approvedRequests count:', approvedRequests?.length ?? 0, '| error:', arError?.message);
 
     let approvedBySiteCode: any[] = [];
     if (siteCode) {
@@ -231,7 +241,8 @@ Deno.serve(async (req) => {
     }
 
     const users = Array.from(usersMap.values());
-    return Response.json({ users });
+    console.log('[listOrgUsers] returning', users.length, 'users:', users.map((u: any) => u.email));
+    return Response.json({ users, debug: { callerEmail, org_group_id: org?.org_group_id, created_by: org?.created_by, approvedCount: approvedRequests?.length ?? 0 } });
   } catch (error) {
     return Response.json({ error: (error as Error).message }, { status: 500 });
   }

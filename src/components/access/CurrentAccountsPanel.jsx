@@ -34,11 +34,20 @@ export default function CurrentAccountsPanel({ organizationId, currentUserEmail 
       const { data, status } = await invokeFunction("listOrgUsers", {
         organization_id: organizationId,
       });
-      if (status !== 200 || !data?.users) return [];
+      console.log('[CurrentAccountsPanel] listOrgUsers status:', status, '| data:', data);
+      if (status !== 200) {
+        console.error('[CurrentAccountsPanel] listOrgUsers error:', data?.error, '| debug:', data?.debug);
+        return [];
+      }
+      if (!data?.users) {
+        console.error('[CurrentAccountsPanel] listOrgUsers returned no users array:', data);
+        return [];
+      }
       return data.users;
     },
     enabled: !!organizationId && !!currentUserEmail,
-    staleTime: 30_000,
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   // Guaranteed fallback: if the edge function didn't include the current user
