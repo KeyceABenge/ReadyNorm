@@ -26,8 +26,8 @@ export default function CurrentAccountsPanel({ organizationId, currentUserEmail 
   const [removingId, setRemovingId] = useState(null);
   const queryClient = useQueryClient();
 
-  const { data: users = [], isLoading } = useQuery({
-    queryKey: ["org_users", organizationId],
+  const { data: dbUsers = [], isLoading } = useQuery({
+    queryKey: ["org_users", organizationId, currentUserEmail ?? ""],
     queryFn: async () => {
       // Fetch the org to get its org_group_id
       const orgs = await OrganizationRepo.filter({ id: organizationId });
@@ -108,23 +108,32 @@ export default function CurrentAccountsPanel({ organizationId, currentUserEmail 
         }
       }
 
-      // Last resort: if the current logged-in user somehow didn't appear in
-      // any DB query (org not linked to a group, all columns null, etc.),
-      // inject them. They have access to this page, so they ARE an owner.
-      if (currentUserEmail && !usersMap.has(currentUserEmail.toLowerCase())) {
-        usersMap.set(currentUserEmail.toLowerCase(), {
-          id: `current-user-fallback`,
-          full_name: currentUserEmail.split('@')[0],
-          email: currentUserEmail,
-          role: 'org_owner',
-          type: 'manager',
-        });
-      }
-
       return Array.from(usersMap.values());
     },
     enabled: !!organizationId,
   });
+
+  // Derive `users` on every render so the fallback always reflects the
+  // current prop value — React Query caches queryFn results, so we can't
+  // rely on the inject inside the queryFn when currentUserEmail arrives
+  // after the first query execution.
+  const users = (() => {
+    if (!currentUserEmail) return dbUsers;
+    const alreadyIn = dbUsers.some(
+      (u) => u.email?.toLowerCase() === currentUserEmail.toLowerCase()
+    );
+    if (alreadyIn) return dbUsers;
+    return [
+      {
+        id: "current-user-fallback",
+        full_name: currentUserEmail.split("@")[0],
+        email: currentUserEmail,
+        role: "org_owner",
+        type: "manager",
+      },
+      ...dbUsers,
+    ];
+  })();
 
   const removeAccessMutation = useMutation({
     mutationFn: async (userId) => {
