@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Upload, MapPin } from "lucide-react";
 import { uploadFile } from "@/lib/adapters/storage";
 import { RainDiverterRepo } from "@/lib/adapters/database";
+import { toast } from "sonner";
 
 export default function DiverterFormModal({
   open,
@@ -114,18 +115,31 @@ export default function DiverterFormModal({
 
     setIsSubmitting(true);
     try {
-      let photo_url = diverter?.photo_url;
+      let photo_url = diverter?.photo_url ?? null;
 
       if (photoFile) {
         const { file_url } = await uploadFile(photoFile);
         photo_url = file_url;
       }
 
+      // Convert empty strings to null for UUID columns so Postgres doesn't reject them
       const data = {
         organization_id: organizationId,
-        ...formData,
+        diverter_id: formData.diverter_id,
+        location_description: formData.location_description,
+        area_id: formData.area_id || null,
+        area_name: formData.area_name || null,
+        production_line_id: formData.production_line_id || null,
+        production_line_name: formData.production_line_name || null,
+        bucket_present: formData.bucket_present,
+        wo_tag_attached: formData.wo_tag_attached,
+        wo_number: formData.wo_number || null,
+        date_installed: formData.date_installed || null,
+        notes: formData.notes || null,
+        marker_x: formData.marker_x ?? null,
+        marker_y: formData.marker_y ?? null,
         photo_url,
-        status: "active"
+        status: "active",
       };
 
       if (diverter?.id) {
@@ -136,10 +150,12 @@ export default function DiverterFormModal({
         await RainDiverterRepo.create(data);
       }
 
+      toast.success(diverter ? "Diverter updated" : "Diverter added");
       onSave?.();
       onOpenChange(false);
     } catch (err) {
       console.error("Failed to save diverter:", err);
+      toast.error(`Failed to save: ${err?.message || "Unknown error"}`);
     } finally {
       setIsSubmitting(false);
     }
