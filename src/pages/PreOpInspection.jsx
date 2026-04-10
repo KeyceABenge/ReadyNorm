@@ -70,15 +70,12 @@ export default function PreOpInspection() {
       const employee = JSON.parse(stored);
       setQaEmployee(employee);
 
-      // Detect if an authenticated manager/admin came from SanitationProgram
-      // vs a QA employee who came through QualityLogin
+      // Detect manager mode: regular QA employees use PIN login (no Supabase session),
+      // so any valid Supabase session means this is an authenticated manager/admin.
       try {
         const isAuth = await isAuthenticated();
         if (isAuth) {
-          const user = await getCurrentUser();
-          if (user.role === "admin") {
-            setIsManagerMode(true);
-          }
+          setIsManagerMode(true);
         }
       } catch (e) {
         // Not authenticated = employee mode
