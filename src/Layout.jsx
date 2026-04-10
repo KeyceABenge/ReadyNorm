@@ -436,45 +436,33 @@ export default function Layout({ children, currentPageName }) {
       {/* Offline Banner */}
       <OfflineBanner />
 
-      {/* Main Content with Pull to Refresh on Mobile
-          IMPORTANT: EmployeeDashboard handles its own PullToRefresh, so skip it here */}
-      {isMobile && currentPageName !== "EmployeeDashboard" ? (
-        <PullToRefresh onRefresh={handlePullToRefresh} className={cn("w-full overflow-x-hidden", isEmployeePage && "pb-20")}>
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.main
-              key={location.pathname}
-              initial={{ opacity: 0.9, x: slideDirection * 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0.9, x: slideDirection * -20 }}
-              transition={{ duration: 0.15, ease: "easeOut" }}
-              className="w-full overflow-x-hidden"
-            >
-              {isProtectedManagerPage ? (
-                <RouteGuard currentPageName={currentPageName}>
-                  {children}
-                </RouteGuard>
-              ) : (
-                children
-              )}
-            </motion.main>
-          </AnimatePresence>
-        </PullToRefresh>
-      ) : isMobile && currentPageName === "EmployeeDashboard" ? (
-        /* EmployeeDashboard on mobile — it handles its own PullToRefresh and animations */
-        <main className={cn("w-full overflow-x-hidden", isEmployeePage && "pb-20")}>
-          {children}
-        </main>
-      ) : (
-        <main className="w-full overflow-x-hidden">
-          {isProtectedManagerPage ? (
-            <RouteGuard currentPageName={currentPageName}>
-              {children}
-            </RouteGuard>
-          ) : (
-            children
-          )}
-        </main>
-      )}
+      {/* Main Content
+          IMPORTANT: Always render the same tree regardless of isMobile to prevent unmount/remount.
+          PullToRefresh is enabled only on mobile (and disabled for EmployeeDashboard which handles its own). */}
+      <PullToRefresh
+        onRefresh={handlePullToRefresh}
+        enabled={isMobile && currentPageName !== "EmployeeDashboard"}
+        className={cn("w-full overflow-x-hidden", isMobile && isEmployeePage && "pb-20")}
+      >
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.main
+            key={location.pathname}
+            initial={{ opacity: 0.9, x: isMobile ? slideDirection * 20 : 0 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0.9, x: isMobile ? slideDirection * -20 : 0 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="w-full overflow-x-hidden"
+          >
+            {isProtectedManagerPage ? (
+              <RouteGuard currentPageName={currentPageName}>
+                {children}
+              </RouteGuard>
+            ) : (
+              children
+            )}
+          </motion.main>
+        </AnimatePresence>
+      </PullToRefresh>
 
       {/* Footer with logo and site code */}
       {(isLoggedIn || isEmployeeMode) && !noLayoutPages.includes(currentPageName) && (

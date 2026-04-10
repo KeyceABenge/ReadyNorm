@@ -11,7 +11,8 @@ export default function PullToRefresh({
   onRefresh, 
   children,
   threshold = 80,
-  className 
+  className,
+  enabled = true
 }) {
   const [pullDistance, setPullDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -21,11 +22,12 @@ export default function PullToRefresh({
   const currentY = useRef(0);
 
   const handleTouchStart = useCallback((e) => {
+    if (!enabled) return;
     if (containerRef.current?.scrollTop === 0) {
       startY.current = e.touches[0].clientY;
       setIsPulling(true);
     }
-  }, []);
+  }, [enabled]);
 
   const handleTouchMove = useCallback((e) => {
     if (!isPulling || isRefreshing) return;
