@@ -50,7 +50,7 @@ WHERE m.role = 'org_owner'
 UPDATE organizations o
 SET created_by = og.owner_email
 FROM organization_groups og
-WHERE o.org_group_id = og.id
+WHERE o.org_group_id::text = og.id::text
   AND o.created_by IS NULL
   AND og.owner_email IS NOT NULL;
 
