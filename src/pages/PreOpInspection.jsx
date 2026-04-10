@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import ReportConditionModal from "@/components/quality/ReportConditionModal";
 import CleaningProgressBar from "@/components/preop/CleaningProgressBar";
+import PreOpFinalSignOff from "@/components/linecleanings/PreOpFinalSignOff";
 
 export default function PreOpInspection() {
   const [qaEmployee, setQaEmployee] = useState(null);
@@ -53,6 +54,7 @@ export default function PreOpInspection() {
   const [failPhotos, setFailPhotos] = useState({});
   const [uploadingPhoto, setUploadingPhoto] = useState(null);
   const [reinspectionAssetIds, setReinspectionAssetIds] = useState(new Set());
+  const [signOffOpen, setSignOffOpen] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -384,26 +386,30 @@ export default function PreOpInspection() {
       const allPassed = updatedResults.every(r => r.status === "pass");
       const anyFailed = updatedResults.some(r => r.status === "fail");
 
+      // For allPassed: save results as in_progress, then prompt for sign-off
+      // For failed/partial: save final status directly
       await PreOpInspectionRepo.update(currentInspection.id, {
         asset_results: updatedResults,
-        status: allPassed ? "passed" : anyFailed ? "failed" : "in_progress",
-        passed_at: allPassed ? new Date().toISOString() : null
+        status: allPassed ? "in_progress" : anyFailed ? "failed" : "in_progress",
+        passed_at: null
       });
 
       // Update local state
       setCurrentInspection(prev => ({
         ...prev,
         asset_results: updatedResults,
-        status: allPassed ? "passed" : anyFailed ? "failed" : "in_progress"
+        status: allPassed ? "in_progress" : anyFailed ? "failed" : "in_progress"
       }));
 
       queryClient.invalidateQueries({ queryKey: ["preop_inspections"] });
       queryClient.invalidateQueries({ queryKey: ["all_preop_inspections"] });
-      // Invalidate shared keys used by ManagerDashboard Records tab
       queryClient.invalidateQueries({ queryKey: ["inspection_records"] });
 
-      if (allPassed || anyFailed) {
-        toast.success(allPassed ? "All assets passed! Line is ready for production." : "Inspection completed with failed items.");
+      if (allPassed) {
+        // Open digital sign-off pad before marking as passed
+        setSignOffOpen(true);
+      } else if (anyFailed) {
+        toast.success("Inspection completed with failed items.");
         setSelectedLine(null);
         setCurrentInspection(null);
         setAssetResults({});
@@ -813,7 +819,7 @@ export default function PreOpInspection() {
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 )}
                 {passedCount === totalAssets && totalAssets > 0
-                  ? "Complete - Line Ready for Production"
+                  ? "All Passed — Sign Off to Clear Line"
                   : pendingCount > 0
                     ? `Save Results (${pendingCount} remaining)`
                     : "Save Results"
@@ -872,6 +878,27 @@ export default function PreOpInspection() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Pre-Op Final Sign-Off */}
+      <PreOpFinalSignOff
+        open={signOffOpen}
+        onOpenChange={setSignOffOpen}
+        inspectionId={currentInspection?.id}
+        inspector={qaEmployee}
+        passedCount={passedCount}
+        totalCount={totalAssets}
+        onComplete={() => {
+          setSignOffOpen(false);
+          queryClient.invalidateQueries({ queryKey: ["preop_inspections"] });
+          queryClient.invalidateQueries({ queryKey: ["all_preop_inspections"] });
+          queryClient.invalidateQueries({ queryKey: ["inspection_records"] });
+          setSelectedLine(null);
+          setCurrentInspection(null);
+          setAssetResults({});
+          setFailComments({});
+          setFailPhotos({});
+        }}
+      />
 
       {/* Report Condition Modal */}
       <ReportConditionModal
