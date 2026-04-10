@@ -16,7 +16,6 @@ DECLARE
     'areas',
     'assets',
     'asset_groups',
-    'line_cleaning_groups',
     'pre_op_inspections',
     'post_clean_inspections'
   ];

@@ -137,8 +137,8 @@ export default function LineCleaningAssignments() {
           const cleanData = {
             production_line_id: assignment.production_line_id,
             production_line_name: assignment.production_line_name,
-            line_down_time: assignment.line_down_time || assignment.expected_line_down_time,
-            expected_line_down_time: assignment.expected_line_down_time,
+            line_down_time: buildLineDownISO(assignment.line_down_time) || assignment.expected_line_down_time || null,
+            expected_line_down_time: assignment.expected_line_down_time || null,
             estimated_end_time: assignment.estimated_end_time,
             duration_minutes: assignment.duration_minutes,
             areas_snapshot: assignment.areas_snapshot,
