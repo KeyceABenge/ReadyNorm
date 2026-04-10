@@ -592,11 +592,24 @@ export default function LineCleaningsSetup() {
         onOpenChange={setAreaFormOpen}
         area={editingArea}
         lineId={selectedLineForArea}
-        onSubmit={(data) => {
+        lines={lines}
+        onSubmit={async (data) => {
           if (editingArea) {
             updateAreaMutation.mutate({ id: editingArea.id, data });
           } else {
-            createAreaMutation.mutate(data);
+            const { lineIds, ...areaData } = data;
+            const targetIds = lineIds?.length > 0 ? lineIds : [selectedLineForArea];
+            try {
+              await Promise.all(
+                targetIds.map(lid => AreaRepo.create({ ...areaData, organization_id: orgId, production_line_id: lid }))
+              );
+              queryClient.invalidateQueries({ queryKey: ["areas"] });
+              setAreaFormOpen(false);
+              setEditingArea(null);
+              toast.success(targetIds.length > 1 ? `Area added to ${targetIds.length} lines` : "Area created");
+            } catch (e) {
+              toast.error("Failed to create area: " + e.message);
+            }
           }
         }}
         isLoading={createAreaMutation.isPending || updateAreaMutation.isPending}
@@ -608,11 +621,28 @@ export default function LineCleaningsSetup() {
         asset={editingAsset}
         areaId={selectedAreaForAsset}
         lineId={lines.find(l => getAreasForLine(l.id).find(a => a.id === selectedAreaForAsset))?.id}
-        onSubmit={(data) => {
+        allAreas={areas}
+        lines={lines}
+        onSubmit={async (data) => {
           if (editingAsset) {
             updateAssetMutation.mutate({ id: editingAsset.id, data });
           } else {
-            createAssetMutation.mutate(data);
+            const { areaIds, ...assetData } = data;
+            const targetIds = areaIds?.length > 0 ? areaIds : [selectedAreaForAsset];
+            try {
+              await Promise.all(
+                targetIds.map(aid => {
+                  const parentLine = lines.find(l => getAreasForLine(l.id).find(a => a.id === aid));
+                  return AssetRepo.create({ ...assetData, organization_id: orgId, area_id: aid, production_line_id: parentLine?.id });
+                })
+              );
+              queryClient.invalidateQueries({ queryKey: ["assets"] });
+              setAssetFormOpen(false);
+              setEditingAsset(null);
+              toast.success(targetIds.length > 1 ? `Asset added to ${targetIds.length} areas` : "Asset created");
+            } catch (e) {
+              toast.error("Failed to create asset: " + e.message);
+            }
           }
         }}
         isLoading={createAssetMutation.isPending || updateAssetMutation.isPending}

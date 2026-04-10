@@ -11,34 +11,45 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
 
-export default function AreaFormModal({ open, onOpenChange, area, lineId, onSubmit, isLoading }) {
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-  });
+export default function AreaFormModal({ open, onOpenChange, area, lineId, lines = [], onSubmit, isLoading }) {
+  const [formData, setFormData] = useState({ name: "", description: "" });
+  const [selectedLineIds, setSelectedLineIds] = useState([]);
 
   useEffect(() => {
     if (area) {
       setFormData(area);
+      setSelectedLineIds([lineId].filter(Boolean));
     } else {
       setFormData({ name: "", description: "" });
+      setSelectedLineIds([lineId].filter(Boolean));
     }
-  }, [area, open]);
+  }, [area, lineId, open]);
+
+  const toggleLine = (id) => {
+    setSelectedLineIds(prev =>
+      prev.includes(id) ? prev.filter(l => l !== id) : [...prev, id]
+    );
+  };
 
   const handleSubmit = () => {
-    onSubmit({
-      ...formData,
-      production_line_id: lineId
-    });
+    if (area) {
+      onSubmit({ ...formData, production_line_id: lineId });
+    } else {
+      onSubmit({ ...formData, lineIds: selectedLineIds });
+    }
   };
+
+  const isCreating = !area;
+  const showMultiLine = isCreating && lines.length > 1;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{area ? "Edit Area" : "Create Area"}</DialogTitle>
+          <DialogTitle>{area ? "Edit Area" : "Add Area"}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -62,15 +73,44 @@ export default function AreaFormModal({ open, onOpenChange, area, lineId, onSubm
               rows={2}
             />
           </div>
+
+          {showMultiLine && (
+            <div>
+              <Label>Add to Lines</Label>
+              <p className="text-xs text-slate-500 mb-2">Select one or more production lines</p>
+              <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
+                {lines.map(line => (
+                  <div key={line.id} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`line-${line.id}`}
+                      checked={selectedLineIds.includes(line.id)}
+                      onCheckedChange={() => toggleLine(line.id)}
+                    />
+                    <Label htmlFor={`line-${line.id}`} className="font-normal cursor-pointer">
+                      {line.name}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+              {selectedLineIds.length > 1 && (
+                <p className="text-xs text-emerald-600 mt-1 font-medium">
+                  Will add this area to {selectedLineIds.length} lines
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={isLoading || !formData.name}>
+          <Button
+            onClick={handleSubmit}
+            disabled={isLoading || !formData.name || (isCreating && selectedLineIds.length === 0)}
+          >
             {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-            {area ? "Update" : "Create"}
+            {area ? "Update" : selectedLineIds.length > 1 ? `Add to ${selectedLineIds.length} Lines` : "Create"}
           </Button>
         </DialogFooter>
       </DialogContent>

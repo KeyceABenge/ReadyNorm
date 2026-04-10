@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
 
-export default function AssetFormModal({ open, onOpenChange, asset, areaId, lineId, onSubmit, isLoading }) {
+export default function AssetFormModal({ open, onOpenChange, asset, areaId, lineId, allAreas = [], lines = [], onSubmit, isLoading }) {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -23,6 +23,7 @@ export default function AssetFormModal({ open, onOpenChange, asset, areaId, line
     estimated_hours: "",
     is_locked: false
   });
+  const [selectedAreaIds, setSelectedAreaIds] = useState([]);
 
   useEffect(() => {
     if (asset) {
@@ -34,18 +35,29 @@ export default function AssetFormModal({ open, onOpenChange, asset, areaId, line
         estimated_hours: asset.estimated_hours || "",
         is_locked: asset.is_locked || false
       });
+      setSelectedAreaIds([areaId].filter(Boolean));
     } else {
       setFormData({ name: "", description: "", ssop_url: "", requires_atp_swab: false, estimated_hours: "", is_locked: false });
+      setSelectedAreaIds([areaId].filter(Boolean));
     }
-  }, [asset, open]);
+  }, [asset, areaId, open]);
+
+  const toggleArea = (id) => {
+    setSelectedAreaIds(prev =>
+      prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]
+    );
+  };
 
   const handleSubmit = () => {
-    onSubmit({
-      ...formData,
-      area_id: areaId,
-      production_line_id: lineId
-    });
+    if (asset) {
+      onSubmit({ ...formData, area_id: areaId, production_line_id: lineId });
+    } else {
+      onSubmit({ ...formData, areaIds: selectedAreaIds });
+    }
   };
+
+  const isCreating = !asset;
+  const showMultiArea = isCreating && allAreas.length > 1;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -124,15 +136,55 @@ export default function AssetFormModal({ open, onOpenChange, asset, areaId, line
               Requires ATP swab testing
             </Label>
           </div>
+
+          {showMultiArea && (
+            <div>
+              <Label>Add to Areas</Label>
+              <p className="text-xs text-slate-500 mb-2">Select one or more areas across any line</p>
+              <div className="space-y-3 max-h-52 overflow-y-auto border rounded-lg p-3">
+                {lines.map(line => {
+                  const lineAreas = allAreas.filter(a => a.production_line_id === line.id);
+                  if (lineAreas.length === 0) return null;
+                  return (
+                    <div key={line.id}>
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">{line.name}</p>
+                      <div className="space-y-1 pl-2">
+                        {lineAreas.map(area => (
+                          <div key={area.id} className="flex items-center gap-2">
+                            <Checkbox
+                              id={`area-${area.id}`}
+                              checked={selectedAreaIds.includes(area.id)}
+                              onCheckedChange={() => toggleArea(area.id)}
+                            />
+                            <Label htmlFor={`area-${area.id}`} className="font-normal cursor-pointer">
+                              {area.name}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {selectedAreaIds.length > 1 && (
+                <p className="text-xs text-emerald-600 mt-1 font-medium">
+                  Will add this asset to {selectedAreaIds.length} areas
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={isLoading || !formData.name}>
+          <Button
+            onClick={handleSubmit}
+            disabled={isLoading || !formData.name || (isCreating && selectedAreaIds.length === 0)}
+          >
             {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-            {asset ? "Update" : "Create"}
+            {asset ? "Update" : selectedAreaIds.length > 1 ? `Add to ${selectedAreaIds.length} Areas` : "Create"}
           </Button>
         </DialogFooter>
       </DialogContent>
