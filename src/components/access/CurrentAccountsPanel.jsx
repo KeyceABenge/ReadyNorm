@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState } from "react";
 import { invokeFunction } from "@/lib/adapters/functions";
-import { OrganizationRepo, OrganizationGroupRepo, OrgGroupMembershipRepo, AccessRequestRepo } from "@/lib/adapters/database";
+import { OrganizationRepo, OrganizationGroupRepo, OrgGroupMembershipRepo } from "@/lib/adapters/database";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,18 @@ export default function CurrentAccountsPanel({ organizationId, currentUserEmail 
   const [search, setSearch] = useState("");
   const [removingId, setRemovingId] = useState(null);
   const queryClient = useQueryClient();
+
+  // Read access requests from the same React Query cache key that
+  // AccessRequestsPanel populates — no extra network call, no RLS dependency.
+  // AccessRequestsPanel is always rendered on the same page and loads first.
+  const { data: allAccessRequests = [] } = useQuery({
+    queryKey: ["access_requests", organizationId],
+    queryFn: () => import("@/lib/adapters/database").then(({ AccessRequestRepo }) =>
+      AccessRequestRepo.filter({ organization_id: organizationId }, "-created_date")
+    ),
+    enabled: !!organizationId,
+  });
+  const approvedRequests = allAccessRequests.filter(r => r.status === "approved");
 
   const { data: dbUsers = [], isLoading } = useQuery({
     queryKey: ["org_users", organizationId, currentUserEmail ?? ""],
@@ -64,31 +76,6 @@ export default function CurrentAccountsPanel({ organizationId, currentUserEmail 
         }
       }
 
-      // Fetch approved access requests for this specific site.
-      // This runs regardless of org_group_id — the RLS policy (migration 012)
-      // allows the owner to see all rows via organizations.created_by check.
-      try {
-        const approved = await AccessRequestRepo.filter({
-          organization_id: organizationId,
-          status: "approved",
-        });
-        for (const ar of approved) {
-          if (!usersMap.has(ar.requester_email)) {
-            usersMap.set(ar.requester_email, {
-              id: ar.id,
-              full_name: ar.requester_name || ar.requester_email,
-              email: ar.requester_email,
-              role: ar.requested_role || "employee",
-              type: "approved_access",
-              approved_at: ar.reviewed_at,
-              created_date: ar.created_date,
-            });
-          }
-        }
-      } catch (e) {
-        console.warn("[CurrentAccountsPanel] access_requests query failed:", e);
-      }
-
       // Guaranteed fallback: fetch the org group owner directly from
       // organization_groups (SELECT policy is USING(true) — always readable).
       // This ensures the owner always appears even when org_group_memberships
@@ -119,26 +106,39 @@ export default function CurrentAccountsPanel({ organizationId, currentUserEmail 
     enabled: !!organizationId,
   });
 
-  // Derive `users` on every render so the fallback always reflects the
-  // current prop value — React Query caches queryFn results, so we can't
-  // rely on the inject inside the queryFn when currentUserEmail arrives
-  // after the first query execution.
+  // Merge approved access requests into the user list at render time.
+  // This is done outside the queryFn so it always reflects the latest
+  // approvedRequests from the shared cache, regardless of query timing.
   const users = (() => {
-    if (!currentUserEmail) return dbUsers;
-    const alreadyIn = dbUsers.some(
-      (u) => u.email?.toLowerCase() === currentUserEmail.toLowerCase()
-    );
-    if (alreadyIn) return dbUsers;
-    return [
-      {
+    const merged = new Map();
+    // Seed with dbUsers (memberships + org group owner)
+    for (const u of dbUsers) merged.set(u.email?.toLowerCase(), u);
+    // Layer in approved access requests from the shared cache
+    for (const ar of approvedRequests) {
+      const key = ar.requester_email?.toLowerCase();
+      if (key && !merged.has(key)) {
+        merged.set(key, {
+          id: ar.id,
+          full_name: ar.requester_name || ar.requester_email,
+          email: ar.requester_email,
+          role: ar.requested_role || "employee",
+          type: "approved_access",
+          approved_at: ar.reviewed_at,
+          created_date: ar.created_date,
+        });
+      }
+    }
+    // Absolute fallback: ensure the current logged-in user is always present
+    if (currentUserEmail && !merged.has(currentUserEmail.toLowerCase())) {
+      merged.set(currentUserEmail.toLowerCase(), {
         id: "current-user-fallback",
         full_name: currentUserEmail.split("@")[0],
         email: currentUserEmail,
         role: "org_owner",
         type: "manager",
-      },
-      ...dbUsers,
-    ];
+      });
+    }
+    return Array.from(merged.values());
   })();
 
   const removeAccessMutation = useMutation({
