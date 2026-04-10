@@ -93,7 +93,7 @@ export default function DiverterFormModal({
     const area = areas.find(a => a.id === areaId);
     setFormData(prev => ({
       ...prev,
-      area_id: areaId,
+      area_id: areaId || "",
       area_name: area?.name || ""
     }));
   };
@@ -102,7 +102,7 @@ export default function DiverterFormModal({
     const line = productionLines.find(l => l.id === lineId);
     setFormData(prev => ({
       ...prev,
-      production_line_id: lineId,
+      production_line_id: lineId || "",
       production_line_name: line?.name || ""
     }));
   };
@@ -183,7 +183,7 @@ export default function DiverterFormModal({
                   <SelectValue placeholder="Select area" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={null}>None</SelectItem>
+                  <SelectItem value="">None</SelectItem>
                   {areas.map(a => (
                     <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
                   ))}
@@ -197,7 +197,7 @@ export default function DiverterFormModal({
                   <SelectValue placeholder="Select line" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={null}>None</SelectItem>
+                  <SelectItem value="">None</SelectItem>
                   {productionLines.map(l => (
                     <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
                   ))}
