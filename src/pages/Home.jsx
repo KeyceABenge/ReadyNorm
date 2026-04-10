@@ -698,6 +698,8 @@ export default function Home() {
             className="flex items-center justify-between mb-6 sm:mb-8"
           >
             <div className="flex items-center gap-2">
+              <img src="/readynorm-logo-large.svg" alt="ReadyNorm" className="h-7 w-auto" />
+              <div className="h-5 w-px bg-slate-300" />
               {organization?.logo_url ? (
                 <ProxiedImage src={organization.logo_url} alt="" className="h-6 w-auto" />
               ) : settings.logo_url ? (

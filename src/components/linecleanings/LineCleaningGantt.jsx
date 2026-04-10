@@ -690,20 +690,26 @@ export default function LineCleaningGantt({
                                         </div>
                                       )}
                                       </div>
-                                      {/* Status indicator strip — 3 dots: cleaned / post-clean / pre-op */}
+                                      {/* Status indicator strip — 3 segments: cleaned / post-clean / pre-op */}
                                       <div className="flex gap-px px-1 pb-0.5 mt-auto">
                                         <div
-                                          className={cn("h-1.5 flex-1 rounded-sm transition-colors", block.isCleaned ? "bg-emerald-500" : "bg-slate-200")}
+                                          className={cn("h-4 flex-1 rounded-sm transition-colors flex items-center justify-center overflow-hidden", block.isCleaned ? "bg-emerald-500" : "bg-slate-200")}
                                           title={block.isCleaned ? "✓ Cleaned & signed off" : "Not yet cleaned"}
-                                        />
+                                        >
+                                          <span className={cn("text-[7px] font-semibold truncate px-0.5 leading-none", block.isCleaned ? "text-white" : "text-slate-400")}>Cleaned</span>
+                                        </div>
                                         <div
-                                          className={cn("h-1.5 flex-1 rounded-sm transition-colors", block.isPostCleanPassed ? "bg-cyan-500" : "bg-slate-200")}
+                                          className={cn("h-4 flex-1 rounded-sm transition-colors flex items-center justify-center overflow-hidden", block.isPostCleanPassed ? "bg-cyan-500" : "bg-slate-200")}
                                           title={block.isPostCleanPassed ? "✓ Post-clean inspection passed" : "Post-clean inspection pending"}
-                                        />
+                                        >
+                                          <span className={cn("text-[7px] font-semibold truncate px-0.5 leading-none", block.isPostCleanPassed ? "text-white" : "text-slate-400")}>Post-Clean ✓</span>
+                                        </div>
                                         <div
-                                          className={cn("h-1.5 flex-1 rounded-sm transition-colors", block.isPreOpPassed ? "bg-violet-500" : "bg-slate-200")}
+                                          className={cn("h-4 flex-1 rounded-sm transition-colors flex items-center justify-center overflow-hidden", block.isPreOpPassed ? "bg-violet-500" : "bg-slate-200")}
                                           title={block.isPreOpPassed ? "✓ Pre-op inspection passed" : "Pre-op inspection pending"}
-                                        />
+                                        >
+                                          <span className={cn("text-[7px] font-semibold truncate px-0.5 leading-none", block.isPreOpPassed ? "text-white" : "text-slate-400")}>Pre-Op ✓</span>
+                                        </div>
                                       </div>
                                     </div>
                                   </div>

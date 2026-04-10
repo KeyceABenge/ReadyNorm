@@ -28,8 +28,6 @@ export default function ProgramCard({
         }`}
         onClick={() => enabled && onClick?.()}
       >
-        {/* Gradient accent */}
-        <div className={`absolute top-0 left-0 right-0 h-1 rounded-t-2xl bg-gradient-to-r ${color}`} />
         
         <div className="p-6">
           <div className="flex items-start justify-between mb-4">

@@ -237,6 +237,8 @@ export default function EmployeeLogin() {
           </button>
 
           <div className="flex items-center gap-2">
+            <img src="/readynorm-logo-large.svg" alt="ReadyNorm" className="h-7 w-auto" />
+            <div className="h-5 w-px bg-slate-300" />
             {currentSettings?.logo_url ? (
               <ProxiedImage src={currentSettings.logo_url} alt="" className="h-6 w-auto" />
             ) : (

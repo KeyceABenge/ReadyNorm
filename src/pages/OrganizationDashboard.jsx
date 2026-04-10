@@ -49,7 +49,7 @@ export default function OrganizationDashboard() {
 
   const { data: sites = [] } = useQuery({
     queryKey: ["org_sites", orgGroup?.id],
-    queryFn: () => OrganizationRepo.filter({ org_group_id: orgGroup.id, status: "active" }),
+    queryFn: () => OrganizationRepo.filter({ org_group_id: orgGroup.id }),
     enabled: !!orgGroup?.id
   });
 

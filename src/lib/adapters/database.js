@@ -309,9 +309,10 @@ function createSupabaseRepository(tableName) {
       const { data, error } = await q;
       if (error) {
         logDbError(tableName, 'filter', error, query);
-        // 22P02 = invalid UUID cast (legacy Base44 ObjectId in JWT/data)
+        // 22P02   = invalid UUID cast (legacy Base44 ObjectId in JWT/data)
         // PGRST205 = table doesn't exist yet in Supabase
-        if (error.code === '22P02' || error.code === 'PGRST205') return [];
+        // PGRST204 / 42703 = column doesn't exist (schema not yet migrated)
+        if (error.code === '22P02' || error.code === 'PGRST205' || error.code === 'PGRST204' || error.code === '42703') return [];
         throw error;
       }
       return data;

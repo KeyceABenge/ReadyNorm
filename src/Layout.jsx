@@ -374,6 +374,8 @@ export default function Layout({ children, currentPageName }) {
             {/* Center: Org name (manager pages) or Desktop Nav (other pages) */}
             {showManagerNav && layoutOrg ? (
               <div className="flex items-center gap-2">
+                <img src="/readynorm-logo-large.svg" alt="ReadyNorm" className="h-6 w-auto" />
+                <div className="h-5 w-px bg-slate-300" />
                 {layoutOrg.logo_url ? (
                   <ProxiedImage src={layoutOrg.logo_url} alt="" className="h-5 w-auto" />
                 ) : (
