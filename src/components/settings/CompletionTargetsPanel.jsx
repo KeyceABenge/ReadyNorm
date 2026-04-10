@@ -62,7 +62,7 @@ export default function CompletionTargetsPanel({ settings, tasks: propTasks, onS
   const queryClient = useQueryClient();
   const { data: roleConfigs = [] } = useQuery({
     queryKey: ["role_configs", orgId],
-    queryFn: () => RoleConfigRepo.filter({ organization_id: orgId, is_active: true }),
+    queryFn: () => RoleConfigRepo.filter({ organization_id: orgId }, "sort_order"),
     enabled: !!orgId,
     staleTime: 60000,
   });
