@@ -184,7 +184,7 @@ export default function DiverterFormModal({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">None</SelectItem>
-                  {areas.map(a => (
+                  {areas.filter(a => a.id).map(a => (
                     <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -198,7 +198,7 @@ export default function DiverterFormModal({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">None</SelectItem>
-                  {productionLines.map(l => (
+                  {productionLines.filter(l => l.id).map(l => (
                     <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
                   ))}
                 </SelectContent>
