@@ -282,7 +282,7 @@ export default function OrganizationDashboard() {
           </TabsList>
 
           <TabsContent value="sites">
-            <OrgSitesList orgGroup={orgGroup} sites={sites} employees={allEmployees} />
+            <OrgSitesList orgGroup={orgGroup} sites={sites} employees={allEmployees} user={user} />
           </TabsContent>
 
           <TabsContent value="members">

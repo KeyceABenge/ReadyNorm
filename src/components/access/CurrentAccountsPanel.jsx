@@ -64,23 +64,29 @@ export default function CurrentAccountsPanel({ organizationId, currentUserEmail 
         }
       }
 
-      // Fetch approved access requests for this specific site
-      const approved = await AccessRequestRepo.filter({
-        organization_id: organizationId,
-        status: "approved",
-      });
-      for (const ar of approved) {
-        if (!usersMap.has(ar.requester_email)) {
-          usersMap.set(ar.requester_email, {
-            id: ar.id,
-            full_name: ar.requester_name || ar.requester_email,
-            email: ar.requester_email,
-            role: ar.requested_role || "employee",
-            type: "approved_access",
-            approved_at: ar.reviewed_at,
-            created_date: ar.created_date,
-          });
+      // Fetch approved access requests for this specific site.
+      // This runs regardless of org_group_id — the RLS policy (migration 012)
+      // allows the owner to see all rows via organizations.created_by check.
+      try {
+        const approved = await AccessRequestRepo.filter({
+          organization_id: organizationId,
+          status: "approved",
+        });
+        for (const ar of approved) {
+          if (!usersMap.has(ar.requester_email)) {
+            usersMap.set(ar.requester_email, {
+              id: ar.id,
+              full_name: ar.requester_name || ar.requester_email,
+              email: ar.requester_email,
+              role: ar.requested_role || "employee",
+              type: "approved_access",
+              approved_at: ar.reviewed_at,
+              created_date: ar.created_date,
+            });
+          }
         }
+      } catch (e) {
+        console.warn("[CurrentAccountsPanel] access_requests query failed:", e);
       }
 
       // Guaranteed fallback: fetch the org group owner directly from

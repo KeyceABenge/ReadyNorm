@@ -21,7 +21,7 @@ const generateCode = (length = 6) => {
   return code;
 };
 
-export default function OrgSitesList({ orgGroup, sites, employees }) {
+export default function OrgSitesList({ orgGroup, sites, employees, user }) {
   const [showAddSite, setShowAddSite] = useState(false);
   const [newSiteName, setNewSiteName] = useState("");
   const queryClient = useQueryClient();
@@ -54,6 +54,7 @@ export default function OrgSitesList({ orgGroup, sites, employees }) {
           site_name: siteName,
           site_code: siteCode,
           org_group_id: orgGroup.id,
+          created_by: user?.email || orgGroup.owner_email,
           status: "active"
         });
         console.log("✓ Site created successfully:", result);
