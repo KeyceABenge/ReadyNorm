@@ -163,6 +163,30 @@ export default function OrganizationDashboard() {
     ];
   })();
 
+  // Absolute fallback: if the authenticated user is an owner/manager but still
+  // not in effectiveMembers (org_group_id null, owner_email null, or any other
+  // data gap), inject them directly. We know who they are from auth.
+  const displayMembers = (() => {
+    if (!isOwner && !isManager) return effectiveMembers;
+    if (!user?.email) return effectiveMembers;
+    const alreadyIn = effectiveMembers.some(
+      m => m.user_email?.toLowerCase() === user.email.toLowerCase() && m.status === "active"
+    );
+    if (alreadyIn) return effectiveMembers;
+    return [
+      {
+        id: `auth-user-${user.id || user.email}`,
+        org_group_id: orgGroup?.id,
+        user_email: user.email,
+        user_name: user.full_name || user.email.split('@')[0],
+        role: "org_owner",
+        site_access_type: "all",
+        status: "active",
+      },
+      ...effectiveMembers,
+    ];
+  })();
+
   if (orgLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -231,7 +255,7 @@ export default function OrganizationDashboard() {
           <Card>
             <CardContent className="p-4 text-center">
               <Users className="w-5 h-5 text-indigo-600 mx-auto mb-1" />
-              <p className="text-2xl font-bold text-slate-900">{effectiveMembers.filter(m => m.status === "active").length + allSiteAdmins.filter(a => !effectiveMembers.some(m => m.user_email === a.email && m.status === "active")).length}</p>
+              <p className="text-2xl font-bold text-slate-900">{displayMembers.filter(m => m.status === "active").length + allSiteAdmins.filter(a => !displayMembers.some(m => m.user_email === a.email && m.status === "active")).length}</p>
               <p className="text-xs text-slate-500">Owners & Managers</p>
             </CardContent>
           </Card>
@@ -263,7 +287,7 @@ export default function OrganizationDashboard() {
 
           <TabsContent value="members">
             {isManager ? (
-              <OrgMembersList orgGroup={orgGroup} members={effectiveMembers} sites={sites} currentUserEmail={user?.email} allSiteAdmins={allSiteAdmins} />
+              <OrgMembersList orgGroup={orgGroup} members={displayMembers} sites={sites} currentUserEmail={user?.email} allSiteAdmins={allSiteAdmins} />
             ) : (
               <Card className="p-8 text-center">
                 <p className="text-slate-500">Only organization owners and managers can manage members.</p>

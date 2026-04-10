@@ -108,6 +108,19 @@ export default function CurrentAccountsPanel({ organizationId, currentUserEmail 
         }
       }
 
+      // Last resort: if the current logged-in user somehow didn't appear in
+      // any DB query (org not linked to a group, all columns null, etc.),
+      // inject them. They have access to this page, so they ARE an owner.
+      if (currentUserEmail && !usersMap.has(currentUserEmail.toLowerCase())) {
+        usersMap.set(currentUserEmail.toLowerCase(), {
+          id: `current-user-fallback`,
+          full_name: currentUserEmail.split('@')[0],
+          email: currentUserEmail,
+          role: 'org_owner',
+          type: 'manager',
+        });
+      }
+
       return Array.from(usersMap.values());
     },
     enabled: !!organizationId,
