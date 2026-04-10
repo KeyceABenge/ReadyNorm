@@ -287,12 +287,7 @@ END $$;
 DO $$
 DECLARE
   tbl TEXT;
-  legacy_manager_tables TEXT[] := ARRAY[
-    'capas'  -- TEXT id & likely TEXT organization_id; manager-only sensitive data
-  ];
-  legacy_employee_tables TEXT[] := ARRAY[
-    -- These legacy tables are operational and may be accessed by employees
-  ];
+  legacy_manager_tables TEXT[] := ARRAY['capas']; -- TEXT id & likely TEXT organization_id; manager-only sensitive data
 BEGIN
   FOREACH tbl IN ARRAY legacy_manager_tables LOOP
     IF NOT EXISTS (
