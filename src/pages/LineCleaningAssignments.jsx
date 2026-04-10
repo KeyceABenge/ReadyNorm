@@ -492,7 +492,7 @@ export default function LineCleaningAssignments() {
           area_id: group.area_id,
           description: `Group: ${group.asset_ids.length} assets`,
           estimated_hours: group.estimated_hours || 0,
-          is_locked: group.is_locked !== false,
+          is_locked: group.is_locked === true,
           is_group: true,
           asset_ids: group.asset_ids
         });

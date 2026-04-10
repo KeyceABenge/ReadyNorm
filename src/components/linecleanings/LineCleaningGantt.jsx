@@ -43,7 +43,7 @@ function enrichAssetsSnapshot(assetsSnapshot, liveAssets, liveAssetGroups) {
   (liveAssets || []).forEach(a => { assetMap[a.id] = a; });
   (liveAssetGroups || []).forEach(g => { groupMap[g.id] = g; });
   return assetsSnapshot.map(snap => {
-    if (snap.is_locked === true || snap.is_locked === false) return snap;
+    // Always prefer live data for is_locked — snapshot value may be stale or incorrectly defaulted
     const group = groupMap[snap.id];
     if (group) return { ...snap, is_locked: group.is_locked === true };
     const asset = assetMap[snap.id];
