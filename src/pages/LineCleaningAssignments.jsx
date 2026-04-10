@@ -1068,22 +1068,30 @@ export default function LineCleaningAssignments() {
                     <span>{assignment.assets_snapshot.length} assets</span>
                   </div>
                   {(() => {
-                    // Derive effective per-area worker counts from simulation.
-                    // For sequential areas this equals total_crew_size; for concurrent areas
-                    // it reflects the actual split. Raw employee_counts stores 1 for all
-                    // sequential areas so we never read it directly for display.
                     const crew = assignment.total_crew_size || 1;
+                    // Determine which sequence numbers have multiple areas (concurrent)
+                    const seqCounts = {};
+                    assignment.areas_snapshot.forEach(a => {
+                      const seq = a.sequence_number ?? 0;
+                      seqCounts[seq] = (seqCounts[seq] || 0) + 1;
+                    });
+                    // For concurrent areas, compute enriched simulation counts
+                    const assetMap = {}, groupMap = {};
+                    assets.forEach(a => { assetMap[a.id] = a; });
+                    assetGroups.forEach(g => { groupMap[g.id] = g; });
+                    const enrichedAssets = (assignment.assets_snapshot || []).map(snap => {
+                      const group = groupMap[snap.id];
+                      if (group) return { ...snap, is_locked: group.is_locked === true };
+                      const asset = assetMap[snap.id];
+                      if (asset) return { ...snap, is_locked: asset.is_locked === true };
+                      return snap;
+                    });
                     const { areaTimeline } = computeAreaTimeline(
-                      assignment.areas_snapshot,
-                      assignment.assets_snapshot,
-                      assignment.employee_counts || {},
-                      crew
+                      assignment.areas_snapshot, enrichedAssets,
+                      assignment.employee_counts || {}, crew
                     );
                     const simCountMap = {};
-                    areaTimeline.forEach(a => {
-                      const initialWorkers = a.segments?.[0]?.workers ?? a.employeeCount;
-                      simCountMap[a.id] = initialWorkers;
-                    });
+                    areaTimeline.forEach(a => { simCountMap[a.id] = a.segments?.[0]?.workers ?? a.employeeCount; });
                     return (
                       <div className="mt-2 flex flex-wrap gap-2">
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-violet-50 text-violet-700 rounded-full text-xs border border-violet-200 font-medium">
@@ -1091,7 +1099,10 @@ export default function LineCleaningAssignments() {
                           Crew: {crew}
                         </span>
                         {assignment.areas_snapshot.map(area => {
-                          const count = simCountMap[area.id] ?? crew;
+                          const seq = area.sequence_number ?? 0;
+                          const isConcurrent = seqCounts[seq] > 1;
+                          // Sequential areas always get the full crew; only concurrent areas split
+                          const count = isConcurrent ? (simCountMap[area.id] ?? crew) : crew;
                           return (
                             <span key={area.id} className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-50 text-slate-600 rounded-full text-xs border border-slate-200">
                               {area.name}: {count}p
