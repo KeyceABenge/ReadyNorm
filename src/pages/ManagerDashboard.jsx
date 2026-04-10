@@ -12,7 +12,7 @@ import {
   TrainingDocumentRepo, CompetencyEvaluationRepo, SanitationDowntimeRepo,
   CAPARepo, PestFindingRepo, PestDeviceRepo, PestServiceReportRepo,
   PestThresholdRepo, PestEscalationMarkerRepo, EMPSampleRepo, EMPSiteRepo,
-  EMPThresholdRepo, TaskCommentRepo
+  EMPThresholdRepo, TaskCommentRepo, UserDashboardConfigRepo
 } from "@/lib/adapters/database";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -76,11 +76,11 @@ import { toast } from "sonner";
 import SanitationHealthScore from "@/components/dashboard/SanitationHealthScore";
 import DecisionIntelligence from "@/components/dashboard/DecisionIntelligence";
 import NarrativePreview from "@/components/dashboard/NarrativePreview";
-import WidgetConfigModal, { getWidgetConfig } from "@/components/dashboard/WidgetConfigModal";
+import WidgetConfigModal, { getWidgetConfig, saveWidgetConfig } from "@/components/dashboard/WidgetConfigModal";
 import LiveShiftProgress from "@/components/dashboard/LiveShiftProgress";
 import LineCleaningTracker from "@/components/dashboard/LineCleaningTracker";
 import WaysToWin from "@/components/dashboard/WaysToWin";
-import DraggableWidgetGrid from "@/components/dashboard/DraggableWidgetGrid";
+import DraggableWidgetGrid, { saveLayoutConfig, getLayoutConfig } from "@/components/dashboard/DraggableWidgetGrid";
 import { calculatePerformanceScores as calcPerfScores, calculateExpectedTasks as calcExpTasks } from "@/components/dashboard/performanceCalculations";
 import MobileEmployeeList from "@/components/mobile/MobileEmployeeList";
 import MobileManagerBottomNav from "@/components/mobile/MobileManagerBottomNav";
@@ -115,6 +115,8 @@ export default function ManagerDashboard() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [widgetConfigOpen, setWidgetConfigOpen] = useState(false);
   const [visibleWidgets, setVisibleWidgets] = useState(() => getWidgetConfig());
+  const [externalLayout, setExternalLayout] = useState(null);  // Supabase-loaded layout pushed into grid
+  const [supabaseConfigId, setSupabaseConfigId] = useState(null); // tracks the existing row ID for upsert
   const [showWidgetHint, setShowWidgetHint] = useState(false);
   const [verifyTaskModalOpen, setVerifyTaskModalOpen] = useState(false);
   const [taskToVerify, setTaskToVerify] = useState(null);
@@ -215,6 +217,57 @@ export default function ManagerDashboard() {
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(3000 * 2 ** attemptIndex, 30000),
   };
+
+  // ── Dashboard layout: load from Supabase so config persists across devices ──
+  const { data: userDashConfig } = useQuery({
+    queryKey: ["user_dashboard_config", user?.id],
+    queryFn: () => UserDashboardConfigRepo.filter({ user_id: user.id }),
+    enabled: !!user?.id,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    select: (rows) => rows?.[0] || null,
+  });
+
+  // When config loads from Supabase, push it into the grid and visible-widgets state
+  useEffect(() => {
+    if (!userDashConfig) return;
+    if (userDashConfig.id) setSupabaseConfigId(userDashConfig.id);
+    const hasOrder = Array.isArray(userDashConfig.widget_order) && userDashConfig.widget_order.length > 0;
+    const hasSizes = userDashConfig.widget_sizes && Object.keys(userDashConfig.widget_sizes).length > 0;
+    if (hasOrder || hasSizes) {
+      setExternalLayout({
+        order: userDashConfig.widget_order || [],
+        sizes: userDashConfig.widget_sizes || {},
+      });
+    }
+    if (Array.isArray(userDashConfig.visible_widgets) && userDashConfig.visible_widgets.length > 0) {
+      setVisibleWidgets(userDashConfig.visible_widgets);
+      saveWidgetConfig(userDashConfig.visible_widgets);
+    }
+  }, [userDashConfig]);
+
+  // Upsert dashboard config to Supabase (debounce-friendly: just fire and forget)
+  const saveDashboardConfig = useMutation({
+    mutationFn: async ({ widget_order, widget_sizes, visible_widgets }) => {
+      if (!user?.id) return;
+      const payload = {
+        user_id: user.id,
+        organization_id: orgId || null,
+        widget_order: widget_order ?? [],
+        widget_sizes: widget_sizes ?? {},
+        visible_widgets: visible_widgets ?? null,
+        updated_at: new Date().toISOString(),
+      };
+      if (supabaseConfigId) {
+        await UserDashboardConfigRepo.update(supabaseConfigId, payload);
+      } else {
+        const created = await UserDashboardConfigRepo.create(payload);
+        if (created?.id) setSupabaseConfigId(created.id);
+      }
+    },
+    onSuccess: () => toast.success("Layout saved", { duration: 1200 }),
+    onError: () => toast.error("Could not save layout — changes are kept locally"),
+  });
 
   // ── TIER 1: Essential data — loads immediately when orgId is available ──
   // Only 4 queries fire at once (tasks, employees, siteSettings, areaSignOffs)
@@ -899,7 +952,14 @@ export default function ManagerDashboard() {
 
             <DraggableWidgetGrid 
               widgets={visibleWidgets}
-              onLayoutChange={(newLayout) => {}}
+              externalLayout={externalLayout}
+              onLayoutChange={(newLayout) => {
+                saveDashboardConfig.mutate({
+                  widget_order: newLayout.order,
+                  widget_sizes: newLayout.sizes,
+                  visible_widgets: visibleWidgets,
+                });
+              }}
               onLongPress={() => { setWidgetConfigOpen(true); if (showWidgetHint) dismissWidgetHint(); }}
             >
               {/* Sanitation Health Score - Hero Metric */}
@@ -1610,7 +1670,15 @@ export default function ManagerDashboard() {
         open={widgetConfigOpen}
         onOpenChange={setWidgetConfigOpen}
         currentWidgets={visibleWidgets}
-        onSave={setVisibleWidgets}
+        onSave={(newWidgets) => {
+          setVisibleWidgets(newWidgets);
+          const currentLayout = getLayoutConfig();
+          saveDashboardConfig.mutate({
+            widget_order: currentLayout.order,
+            widget_sizes: currentLayout.sizes,
+            visible_widgets: newWidgets,
+          });
+        }}
       />
 
       <VerifyTaskModal

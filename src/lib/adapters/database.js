@@ -197,6 +197,8 @@ const TABLE_MAP = {
   ComplianceEvidence: "compliance_evidence",
   // Water testing
   WaterTest: "water_tests",
+  // User dashboard layout preferences
+  UserDashboardConfig: "user_dashboard_configs",
 };
 
 // Parse Base44-style sort: "-created_date" → { column: "created_date", ascending: false }
@@ -683,6 +685,9 @@ export const ComplianceEvidenceRepo = getRepository("ComplianceEvidence");
 
 // ─── Water testing ───
 export const WaterTestRepo = getRepository("WaterTest");
+
+// ─── User dashboard layout persistence ───
+export const UserDashboardConfigRepo = getRepository("UserDashboardConfig");
 
 // ─── AI-generated in-memory repositories (for predictions/analysis) ───
 // These don't have persistent Supabase tables; they're computed on-demand

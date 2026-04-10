@@ -127,9 +127,21 @@ export default function DraggableWidgetGrid({
   widgets, 
   children,
   onLayoutChange,
-  onLongPress
+  onLongPress,
+  externalLayout,  // when provided, overrides localStorage with Supabase-loaded config
 }) {
   const [layout, setLayout] = useState(() => getLayoutConfig());
+
+  // When the parent loads a saved layout from Supabase, apply it here and write-through to localStorage
+  useEffect(() => {
+    if (!externalLayout) return;
+    const merged = {
+      order: externalLayout.order || [],
+      sizes: { ...DEFAULT_SIZES, ...(externalLayout.sizes || {}) },
+    };
+    setLayout(merged);
+    saveLayoutConfig(merged);
+  }, [externalLayout]);
   const widgetRefs = useRef({});
   const longPressTimerRef = useRef(null);
 
