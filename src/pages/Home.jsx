@@ -343,14 +343,8 @@ export default function Home() {
     try {
       const isAuth = await isAuthenticated();
       if (isAuth) {
-        const user = await getCurrentUser();
-        if (!isUuid(user.organization_id)) {
-          setCurrentUser(user);
-          setShowOrgSetup(true);
-        } else {
-          sessionStorage.removeItem('standalone_program');
-          window.location.href = createPageUrl("ManagerDashboard");
-        }
+        sessionStorage.removeItem('standalone_program');
+        window.location.href = createPageUrl("ManagerDashboard");
       } else {
         window.location.href = "/ManagerLogin";
       }

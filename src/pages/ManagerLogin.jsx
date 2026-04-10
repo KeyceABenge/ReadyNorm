@@ -41,7 +41,7 @@ export default function ManagerLogin() {
     }
   }, []);
 
-  const nextUrl = new URLSearchParams(window.location.search).get("next") || "/";
+  const nextUrl = new URLSearchParams(window.location.search).get("next") || "/ManagerDashboard";
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
