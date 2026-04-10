@@ -454,7 +454,7 @@ export default function Home() {
   // No site code - show create new site or enter code options
   if (!siteCode) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-orange-50 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundImage: "url('/background-image.svg')", backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
         <div className="max-w-2xl w-full">
           <motion.div 
             initial={{ opacity: 0, y: -20 }}
@@ -570,7 +570,7 @@ export default function Home() {
   // a non-approved value. Never show it while accessStatus is still null (loading).
   if (authResolved && siteCode && accessStatus !== null && accessStatus !== "approved") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-orange-50 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundImage: "url('/background-image.svg')", backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
         <div className="max-w-lg w-full">
           <motion.div 
             initial={{ opacity: 0, y: -20 }}
@@ -641,7 +641,7 @@ export default function Home() {
   // Manager pending approval
   if (chosenRole === "manager_pending" && !isAuthenticatedManager) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-orange-50 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundImage: "url('/background-image.svg')", backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
         <div className="max-w-sm w-full text-center">
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
             {organization?.logo_url ? (
@@ -688,7 +688,7 @@ export default function Home() {
   // also need to check managerAccessStatus (which is only set for external requests).
   if (isAuthenticatedManager || chosenRole === "manager") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-orange-50">
+      <div className="min-h-screen" style={{ backgroundImage: "url('/background-image.svg')", backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
         <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6">
 
           {/* Top Bar */}
@@ -889,7 +889,7 @@ export default function Home() {
 
   // No role chosen yet — show role chooser
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-orange-50 flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundImage: "url('/background-image.svg')", backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
       <div className="w-full max-w-lg">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
