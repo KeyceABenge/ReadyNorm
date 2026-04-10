@@ -137,7 +137,7 @@ export default function LineCleaningAssignments() {
           const cleanData = {
             production_line_id: assignment.production_line_id,
             production_line_name: assignment.production_line_name,
-            line_down_time: buildLineDownISO(assignment.line_down_time) || assignment.expected_line_down_time || null,
+            line_down_time: buildLineDownISO(assignment.line_down_time, assignment.line_down_date) || assignment.expected_line_down_time || null,
             expected_line_down_time: assignment.expected_line_down_time || null,
             estimated_end_time: assignment.estimated_end_time,
             duration_minutes: assignment.duration_minutes,
@@ -185,6 +185,7 @@ export default function LineCleaningAssignments() {
     setAssignments([...assignments, {
       production_line_id: "",
       production_line_name: "",
+      line_down_date: selectedDate, // date portion of the line-down time
       line_down_time: "", // when this specific line goes down (user input)
       expected_line_down_time: "", // effective start (calculated: max of down time vs previous end)
       duration_minutes: 60,
@@ -267,11 +268,12 @@ export default function LineCleaningAssignments() {
   // Convert an "HH:mm" time string + the currently selected date into an ISO timestamp.
   // Used because line_down_time is stored as a simple time string to avoid datetime-local
   // browser inconsistencies; all internal calculations still use ISO.
-  const buildLineDownISO = (timeStr) => {
-    if (!timeStr || !selectedDate) return "";
+  const buildLineDownISO = (timeStr, dateStr) => {
+    const d = dateStr || selectedDate;
+    if (!timeStr || !d) return "";
     try {
-      const d = new Date(`${selectedDate}T${timeStr}`);
-      return isNaN(d.getTime()) ? "" : d.toISOString();
+      const dt = new Date(`${d}T${timeStr}`);
+      return isNaN(dt.getTime()) ? "" : dt.toISOString();
     } catch { return ""; }
   };
 
@@ -279,7 +281,7 @@ export default function LineCleaningAssignments() {
     const cascadeStartTimes = (list, from) => {
       for (let i = Math.max(from, 0); i < list.length; i++) {
         const lineDown = list[i].line_down_time;   // "HH:mm" or ""
-        const lineDownISO = buildLineDownISO(lineDown);
+        const lineDownISO = buildLineDownISO(lineDown, list[i].line_down_date);
 
         if (i === 0) {
           list[i].expected_line_down_time = lineDownISO;
@@ -349,10 +351,14 @@ export default function LineCleaningAssignments() {
   const handleLineDownTimeChange = (index, time) => {
     const updatedAssignments = [...assignments];
     updatedAssignments[index].line_down_time = time;
-
-    // Recalculate all effective start/end times
     recalculateSubsequentTimes(updatedAssignments, 0);
+    setAssignments(updatedAssignments);
+  };
 
+  const handleLineDownDateChange = (index, date) => {
+    const updatedAssignments = [...assignments];
+    updatedAssignments[index].line_down_date = date;
+    recalculateSubsequentTimes(updatedAssignments, 0);
     setAssignments(updatedAssignments);
   };
 
@@ -555,6 +561,11 @@ export default function LineCleaningAssignments() {
             if (t.includes('T')) return format(parseISO(t), "HH:mm");  // ISO → HH:mm
             return t;  // already HH:mm
           })(),
+          line_down_date: (() => {
+            const t = a.line_down_time || a.expected_line_down_time;
+            if (t && t.includes('T')) return format(parseISO(t), "yyyy-MM-dd");
+            return a.line_down_date || selectedDate;
+          })(),
         };
       });
 
@@ -722,60 +733,92 @@ export default function LineCleaningAssignments() {
                                 </Select>
                               </div>
 
-                              {/* Time Details */}
-                              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                <div>
-                                  <Label className="flex items-center gap-1">
-                                    <Clock className="w-3.5 h-3.5" />
-                                    Line Down Time *
-                                  </Label>
-                                  <Input
+                              {/* Timing Timeline */}
+                              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                                {/* 1. Line Goes Down */}
+                                <div className="col-span-2 lg:col-span-1 p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="w-2 h-2 rounded-full bg-red-400" />
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Line Goes Down</span>
+                                  </div>
+                                  <input
+                                    type="date"
+                                    value={assignment.line_down_date || selectedDate}
+                                    onChange={(e) => handleLineDownDateChange(index, e.target.value)}
+                                    className="w-full h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent"
+                                  />
+                                  <input
                                     type="time"
                                     value={assignment.line_down_time || ""}
                                     onChange={(e) => handleLineDownTimeChange(index, e.target.value || "")}
-                                    className="mt-1"
+                                    className="w-full h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent"
                                   />
-                                  <p className="text-xs text-slate-500 mt-1">What time does this line stop production?</p>
                                 </div>
-                                <div>
-                                  <Label>Cleaning Starts</Label>
-                                  <div className="mt-1 px-3 py-2 bg-slate-50 border rounded-md text-sm text-slate-700">
-                                    {assignment.expected_line_down_time ? 
-                                      format(parseISO(assignment.expected_line_down_time), "h:mm a") : 
-                                      "—"
-                                    }
+
+                                {/* 2. Cleaning Starts */}
+                                <div className="p-3.5 bg-emerald-50 rounded-xl border border-emerald-200 space-y-1.5">
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                                    <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Starts</span>
                                   </div>
+                                  <p className="text-xl font-bold text-emerald-700 leading-tight">
+                                    {assignment.expected_line_down_time
+                                      ? format(parseISO(assignment.expected_line_down_time), "h:mm a")
+                                      : <span className="text-slate-300 text-sm font-normal">—</span>}
+                                  </p>
                                   {assignment.expected_line_down_time && assignment.line_down_time && (() => {
-                                    const ldISO = buildLineDownISO(assignment.line_down_time);
+                                    const ldISO = buildLineDownISO(assignment.line_down_time, assignment.line_down_date);
                                     return ldISO && assignment.expected_line_down_time > ldISO;
                                   })() && (
-                                    <p className="text-xs text-amber-600 mt-1">
+                                    <p className="text-[11px] text-amber-500 font-medium">
                                       ⏳ {(() => {
-                                        const ldISO = buildLineDownISO(assignment.line_down_time);
+                                        const ldISO = buildLineDownISO(assignment.line_down_time, assignment.line_down_date);
                                         const diff = differenceInMinutes(parseISO(assignment.expected_line_down_time), parseISO(ldISO));
-                                        return `${diff}m idle — waiting for prev line to finish`;
-                                      })()}
+                                        return `${diff}m idle`;
+                                      })()} waiting
                                     </p>
                                   )}
                                 </div>
-                                <div>
-                                  <Label>Duration (min)</Label>
-                                  <Input
-                                    type="number"
-                                    value={assignment.duration_minutes}
-                                    onChange={(e) => handleDurationChange(index, e.target.value)}
-                                    className="mt-1"
-                                    min="1"
-                                  />
-                                </div>
-                                <div>
-                                  <Label>Cleaning Ends</Label>
-                                  <div className="mt-1 px-3 py-2 bg-slate-50 border rounded-md text-sm text-slate-700">
-                                    {assignment.estimated_end_time ? 
-                                      format(parseISO(assignment.estimated_end_time), "h:mm a") : 
-                                      "—"
-                                    }
+
+                                {/* 3. Duration */}
+                                <div className="p-3.5 bg-white rounded-xl border border-slate-200 space-y-1.5">
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="w-2 h-2 rounded-full bg-slate-400" />
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Duration</span>
                                   </div>
+                                  <div className="flex items-center gap-1.5">
+                                    <input
+                                      type="number"
+                                      value={assignment.duration_minutes}
+                                      onChange={(e) => handleDurationChange(index, e.target.value)}
+                                      className="w-16 h-9 rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-sm text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent"
+                                      min="1"
+                                    />
+                                    <span className="text-xs text-slate-400 font-medium">min</span>
+                                  </div>
+                                  <p className="text-[10px] text-slate-400">auto-calculated</p>
+                                </div>
+
+                                {/* 4. Cleaning Ends */}
+                                <div className="p-3.5 bg-blue-50 rounded-xl border border-blue-200 space-y-1.5">
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="w-2 h-2 rounded-full bg-blue-400" />
+                                    <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Ends</span>
+                                  </div>
+                                  <p className="text-xl font-bold text-blue-700 leading-tight">
+                                    {assignment.estimated_end_time
+                                      ? format(parseISO(assignment.estimated_end_time), "h:mm a")
+                                      : <span className="text-slate-300 text-sm font-normal">—</span>}
+                                  </p>
+                                  {assignment.estimated_end_time && (() => {
+                                    const endDate = format(parseISO(assignment.estimated_end_time), "yyyy-MM-dd");
+                                    const startDate = assignment.line_down_date || selectedDate;
+                                    return endDate !== startDate ? (
+                                      <p className="text-[11px] text-blue-400 font-medium">
+                                        +1 day · {format(parseISO(assignment.estimated_end_time), "MMM d")}
+                                      </p>
+                                    ) : null;
+                                  })()}
                                 </div>
                               </div>
 
@@ -944,7 +987,7 @@ export default function LineCleaningAssignments() {
                         {assignment.line_down_time
                           ? (assignment.line_down_time.includes('T')
                             ? format(parseISO(assignment.line_down_time), "h:mm a")
-                            : format(new Date(`${selectedDate}T${assignment.line_down_time}`), "h:mm a"))
+                            : format(new Date(`${assignment.line_down_date || selectedDate}T${assignment.line_down_time}`), "h:mm a"))
                           : (assignment.expected_line_down_time
                             ? format(parseISO(assignment.expected_line_down_time), "h:mm a")
                             : "—")}
