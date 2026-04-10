@@ -110,6 +110,50 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Always guarantee the org group owner appears in the list, even if they
+    // have no org_group_memberships row (legacy accounts, or row was never created).
+    if (org?.org_group_id) {
+      const { data: orgGroups } = await supabase
+        .from('organization_groups')
+        .select('id, owner_email, owner_name, created_date')
+        .eq('id', org.org_group_id);
+      const orgGrp = orgGroups?.[0];
+      if (orgGrp?.owner_email) {
+        const ownerEmail = orgGrp.owner_email.toLowerCase();
+        const alreadyIn = [...usersMap.values()].some(
+          (u: any) => u.email?.toLowerCase() === ownerEmail
+        );
+        if (!alreadyIn) {
+          usersMap.set(ownerEmail, {
+            id: `grp-owner-${orgGrp.id}`,
+            full_name: orgGrp.owner_name || orgGrp.owner_email,
+            email: orgGrp.owner_email,
+            role: 'org_owner',
+            type: 'manager',
+            created_date: orgGrp.created_date,
+          });
+        }
+      }
+    }
+
+    // Also guarantee the org creator appears (handles orgs with no org_group_id).
+    if (org?.created_by) {
+      const creatorEmail = org.created_by.toLowerCase();
+      const alreadyIn = [...usersMap.values()].some(
+        (u: any) => u.email?.toLowerCase() === creatorEmail
+      );
+      if (!alreadyIn) {
+        usersMap.set(creatorEmail, {
+          id: `org-creator-${org.id}`,
+          full_name: org.created_by.split('@')[0],
+          email: org.created_by,
+          role: 'org_owner',
+          type: 'manager',
+          created_date: org.created_date,
+        });
+      }
+    }
+
     const { data: approvedRequests } = await supabase
       .from('access_requests')
       .select('*')

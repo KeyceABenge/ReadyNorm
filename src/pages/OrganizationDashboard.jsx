@@ -2,7 +2,8 @@
  * Organization Dashboard — cross-site management for org owners/managers.
  * Shows all sites, members, and organization-level controls.
  */
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { isAuthenticated, getCurrentUser } from "@/lib/adapters/auth";
 import { OrganizationGroupRepo, OrgGroupMembershipRepo, OrganizationRepo, EmployeeRepo } from "@/lib/adapters/database";
 import { invokeFunction } from "@/lib/adapters/functions";
@@ -101,10 +102,42 @@ export default function OrganizationDashboard() {
     enabled: sites.length > 0
   });
 
-  // Check user's role in the org
-  const userMembership = members.find(m => m.user_email === user?.email && m.status === "active");
-  const isOwner = userMembership?.role === "org_owner";
+  const queryClient = useQueryClient();
+
+  // Check user's role in the org.
+  // Primary: look for an active membership row.
+  // Fallback: check orgGroup.owner_email for legacy accounts that have no membership row yet.
+  const isOrgGroupOwner =
+    !!orgGroup && !!user?.email &&
+    orgGroup.owner_email?.toLowerCase() === user.email.toLowerCase();
+
+  const userMembership = members.find(
+    m => m.user_email?.toLowerCase() === user?.email?.toLowerCase() && m.status === "active"
+  );
+  const isOwner = userMembership?.role === "org_owner" || isOrgGroupOwner;
   const isManager = userMembership?.role === "org_manager" || isOwner;
+
+  // Auto-repair: if this user IS the org group owner but has no membership row
+  // (legacy account or row was never persisted), silently create the row so that
+  // the user list, listOrgUsers edge function, and RLS all work going forward.
+  useEffect(() => {
+    if (!orgGroup || !user?.email || !isOrgGroupOwner) return;
+    const hasRow = members.some(
+      m => m.user_email?.toLowerCase() === user.email.toLowerCase() && m.status === "active"
+    );
+    if (!hasRow) {
+      OrgGroupMembershipRepo.create({
+        org_group_id: orgGroup.id,
+        user_email: user.email,
+        user_name: user.full_name || user.email,
+        role: "org_owner",
+        site_access_type: "all",
+        status: "active"
+      })
+        .then(() => queryClient.invalidateQueries({ queryKey: ["org_members", orgGroup.id] }))
+        .catch(() => {}); // silently ignore duplicates / constraint errors
+    }
+  }, [orgGroup?.id, user?.email, members.length]);
 
   if (orgLoading) {
     return (
