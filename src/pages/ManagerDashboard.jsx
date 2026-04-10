@@ -970,7 +970,7 @@ export default function ManagerDashboard() {
                     areas={areas}
                     assets={assets}
                     employees={employees}
-                    postCleanInspections={postCleanInspections}
+                    postCleanInspections={inspectionRecords}
                     preOpInspections={preOpInspections}
                   />
                 </div>
