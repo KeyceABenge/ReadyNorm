@@ -90,19 +90,21 @@ export default function DiverterFormModal({
   };
 
   const handleAreaChange = (areaId) => {
-    const area = areas.find(a => a.id === areaId);
+    const resolved = areaId === "__none__" ? "" : areaId;
+    const area = areas.find(a => a.id === resolved);
     setFormData(prev => ({
       ...prev,
-      area_id: areaId || "",
+      area_id: resolved,
       area_name: area?.name || ""
     }));
   };
 
   const handleLineChange = (lineId) => {
-    const line = productionLines.find(l => l.id === lineId);
+    const resolved = lineId === "__none__" ? "" : lineId;
+    const line = productionLines.find(l => l.id === resolved);
     setFormData(prev => ({
       ...prev,
-      production_line_id: lineId || "",
+      production_line_id: resolved,
       production_line_name: line?.name || ""
     }));
   };
@@ -178,12 +180,12 @@ export default function DiverterFormModal({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Area</Label>
-              <Select value={formData.area_id} onValueChange={handleAreaChange}>
+              <Select value={formData.area_id || "__none__"} onValueChange={handleAreaChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select area" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="__none__">None</SelectItem>
                   {areas.filter(a => a.id).map(a => (
                     <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
                   ))}
@@ -192,7 +194,7 @@ export default function DiverterFormModal({
             </div>
             <div className="space-y-2">
               <Label>Production Line</Label>
-              <Select value={formData.production_line_id} onValueChange={handleLineChange}>
+              <Select value={formData.production_line_id || "__none__"} onValueChange={handleLineChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select line" />
                 </SelectTrigger>
