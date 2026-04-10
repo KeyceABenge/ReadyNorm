@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { useState } from "react";
 import { invokeFunction } from "@/lib/adapters/functions";
+import { OrganizationRepo, OrgGroupMembershipRepo, AccessRequestRepo } from "@/lib/adapters/database";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,10 +29,61 @@ export default function CurrentAccountsPanel({ organizationId, currentUserEmail 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["org_users", organizationId],
     queryFn: async () => {
-      const response = await invokeFunction("listOrgUsers", {
+      // Fetch the org to get its org_group_id
+      const orgs = await OrganizationRepo.filter({ id: organizationId });
+      const org = orgs[0];
+      if (!org) return [];
+
+      const usersMap = new Map();
+
+      // Fetch active org group members (migration 010 grants owners SELECT
+      // access without needing a pre-existing membership row)
+      if (org.org_group_id) {
+        const memberships = await OrgGroupMembershipRepo.filter({
+          org_group_id: org.org_group_id,
+          status: "active",
+        });
+        for (const m of memberships) {
+          // Respect site_access_type — null/undefined means 'all'
+          const hasAccess =
+            !m.site_access_type ||
+            m.site_access_type === "all" ||
+            (m.site_access_type === "selected" &&
+              (m.allowed_site_ids || []).includes(organizationId));
+          if (!hasAccess) continue;
+          if (!usersMap.has(m.user_email)) {
+            usersMap.set(m.user_email, {
+              id: m.id,
+              full_name: m.user_name || m.user_email,
+              email: m.user_email,
+              role: m.role || "manager",
+              type: "manager",
+              created_date: m.created_date,
+            });
+          }
+        }
+      }
+
+      // Fetch approved access requests for this specific site
+      const approved = await AccessRequestRepo.filter({
         organization_id: organizationId,
+        status: "approved",
       });
-      return response.data?.users || [];
+      for (const ar of approved) {
+        if (!usersMap.has(ar.requester_email)) {
+          usersMap.set(ar.requester_email, {
+            id: ar.id,
+            full_name: ar.requester_name || ar.requester_email,
+            email: ar.requester_email,
+            role: ar.requested_role || "employee",
+            type: "approved_access",
+            approved_at: ar.reviewed_at,
+            created_date: ar.created_date,
+          });
+        }
+      }
+
+      return Array.from(usersMap.values());
     },
     enabled: !!organizationId,
   });
