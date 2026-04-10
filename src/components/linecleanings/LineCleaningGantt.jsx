@@ -275,18 +275,25 @@ export default function LineCleaningGantt({
       const aSignOffsForAssignment = signOffsByAssignment[a.id] || [];
       const cleanedAreaIds = new Set();
       (a.areas_snapshot || []).forEach(area => {
-        const areaAssets = (a.assets_snapshot || []).filter(asset => asset.area_id === area.id);
-        if (areaAssets.length === 0) return;
-        const passed = aSignOffsForAssignment.filter(so => so.area_id === area.id && so.status === "passed_inspection");
-        // Deduplicate by asset_id
+        const areaSnapItems = (a.assets_snapshot || []).filter(asset => asset.area_id === area.id);
+        if (areaSnapItems.length === 0) return;
+        // Count actual assets: groups expand to asset_ids.length, individual assets count as 1
+        const totalActualAssets = areaSnapItems.reduce((sum, item) =>
+          sum + (item.is_group && item.asset_ids?.length > 0 ? item.asset_ids.length : 1), 0);
+        const passed = aSignOffsForAssignment.filter(so =>
+          so.area_id === area.id && so.status === "passed_inspection");
         const passedAssetIds = new Set(passed.map(so => so.asset_id));
-        if (passedAssetIds.size >= areaAssets.length) cleanedAreaIds.add(area.id);
+        if (passedAssetIds.size >= totalActualAssets) cleanedAreaIds.add(area.id);
       });
 
-      // Post-clean passed: PostCleanInspection record with failed_assets === 0 for this assignment + area
+      // Post-clean passed: PostCleanInspection record for this assignment + area with no failures
       const postCleanPassedAreaIds = new Set(
         postCleanInspections
-          .filter(p => p.line_cleaning_assignment_id === a.id && p.failed_assets === 0 && p.total_assets > 0)
+          .filter(p =>
+            p.line_cleaning_assignment_id === a.id &&
+            (p.failed_assets === 0 || p.failed_assets === null) &&
+            p.total_assets > 0
+          )
           .map(p => p.area_id)
       );
 
@@ -295,7 +302,7 @@ export default function LineCleaningGantt({
       const preOpPassed = preOpInspections.some(
         p => p.production_line_id === a.production_line_id &&
              p.status === "passed" &&
-             p.inspection_date?.startsWith(today)
+             (p.inspection_date?.startsWith(today) || p.passed_at?.startsWith(today))
       );
 
       const enrichedAreaBlocks = areaBlocks.map(block => ({
@@ -471,7 +478,7 @@ export default function LineCleaningGantt({
     });
 
     return { timeSlots: slots, totalMinutes: total, rows: finalRows };
-  }, [effectiveAssignments, effectiveSignOffs, liveAssets, liveAssetGroups, employees, live, tick]);
+  }, [effectiveAssignments, effectiveSignOffs, liveAssets, liveAssetGroups, employees, live, tick, postCleanInspections, preOpInspections]);
 
   if (rows.length === 0) return null;
 
