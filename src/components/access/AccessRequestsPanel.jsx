@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useState } from "react";
-import { AccessRequestRepo } from "@/lib/adapters/database";
+import { AccessRequestRepo, OrganizationRepo, OrgGroupMembershipRepo } from "@/lib/adapters/database";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,13 +30,45 @@ export default function AccessRequestsPanel({ organizationId, user, alwaysShow =
   const reviewedRequests = requests.filter(r => r.status !== "pending");
 
   const approveMutation = useMutation({
-    mutationFn: (requestId) => AccessRequestRepo.update(requestId, {
-      status: "approved",
-      reviewed_by: user?.email,
-      reviewed_at: new Date().toISOString()
-    }),
+    mutationFn: async (request) => {
+      // 1. Mark the access request as approved
+      await AccessRequestRepo.update(request.id, {
+        status: "approved",
+        reviewed_by: user?.email,
+        reviewed_at: new Date().toISOString()
+      });
+
+      // 2. Create an org_group_memberships row so the user shows up in
+      //    Current Accounts and has proper RLS access going forward.
+      try {
+        const orgs = await OrganizationRepo.filter({ id: request.organization_id });
+        const org = orgs[0];
+        if (org?.org_group_id) {
+          const existing = await OrgGroupMembershipRepo.filter({
+            org_group_id: org.org_group_id,
+            user_email: request.requester_email
+          });
+          if (existing.length === 0) {
+            await OrgGroupMembershipRepo.create({
+              org_group_id: org.org_group_id,
+              user_email: request.requester_email,
+              user_name: request.requester_name || request.requester_email,
+              role: request.requested_role === "manager" ? "org_manager" : (request.requested_role || "org_manager"),
+              site_access_type: "selected",
+              allowed_site_ids: [request.organization_id],
+              status: "active"
+            });
+          }
+        }
+      } catch (e) {
+        // Don't fail the approval if membership creation fails
+        console.warn("[AccessRequestsPanel] Could not create membership row:", e);
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["access_requests"] });
+      queryClient.invalidateQueries({ queryKey: ["org_users"] });
+      queryClient.invalidateQueries({ queryKey: ["org_members"] });
       toast.success("Access approved");
     }
   });
@@ -121,7 +153,7 @@ export default function AccessRequestsPanel({ organizationId, user, alwaysShow =
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                       <Button
                         size="sm"
-                        onClick={() => approveMutation.mutate(request.id)}
+                        onClick={() => approveMutation.mutate(request)}
                         disabled={approveMutation.isPending}
                         className="bg-emerald-600 hover:bg-emerald-700 h-8 px-3 text-xs"
                       >
