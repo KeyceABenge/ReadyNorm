@@ -139,7 +139,20 @@ export default function AssetFormModal({ open, onOpenChange, asset, areaId, line
 
           {showMultiArea && (
             <div>
-              <Label>Add to Areas</Label>
+              <div className="flex items-center justify-between mb-2">
+                <Label>Add to Areas</Label>
+                <button
+                  type="button"
+                  className="text-xs text-blue-600 hover:underline"
+                  onClick={() =>
+                    setSelectedAreaIds(
+                      selectedAreaIds.length === allAreas.length ? [] : allAreas.map(a => a.id)
+                    )
+                  }
+                >
+                  {selectedAreaIds.length === allAreas.length ? "Deselect All" : "Select All"}
+                </button>
+              </div>
               <p className="text-xs text-slate-500 mb-2">Select one or more areas across any line</p>
               <div className="space-y-3 max-h-52 overflow-y-auto border rounded-lg p-3">
                 {lines.map(line => {

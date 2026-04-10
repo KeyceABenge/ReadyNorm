@@ -76,7 +76,20 @@ export default function AreaFormModal({ open, onOpenChange, area, lineId, lines 
 
           {showMultiLine && (
             <div>
-              <Label>Add to Lines</Label>
+              <div className="flex items-center justify-between mb-2">
+                <Label>Add to Lines</Label>
+                <button
+                  type="button"
+                  className="text-xs text-blue-600 hover:underline"
+                  onClick={() =>
+                    setSelectedLineIds(
+                      selectedLineIds.length === lines.length ? [] : lines.map(l => l.id)
+                    )
+                  }
+                >
+                  {selectedLineIds.length === lines.length ? "Deselect All" : "Select All"}
+                </button>
+              </div>
               <p className="text-xs text-slate-500 mb-2">Select one or more production lines</p>
               <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
                 {lines.map(line => (
