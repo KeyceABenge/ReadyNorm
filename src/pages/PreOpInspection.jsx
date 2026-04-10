@@ -14,6 +14,7 @@ import {
   SanitaryReportRepo
 } from "@/lib/adapters/database";
 import { createPageUrl } from "@/utils";
+import { isAuthenticated, getCurrentUser } from "@/lib/adapters/auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   Loader2, ArrowLeft, CheckCircle2, XCircle, Clock, 
@@ -473,7 +474,7 @@ export default function PreOpInspection() {
                 setAssetResults({});
                 setFailComments({});
               } else if (isManagerMode) {
-                window.location.href = createPageUrl("SanitationProgram");
+                window.location.href = createPageUrl("Home");
               } else {
                 localStorage.removeItem("selectedQAEmployee");
                 window.location.href = createPageUrl("QualityLogin");
