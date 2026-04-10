@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Plus, Trash2, CheckCircle2, Users } from "lucide-react";
+import { ManagementReviewRepo } from "@/lib/adapters/database";
 
 const REVIEW_TYPES = ["monthly", "quarterly", "semi_annual", "annual", "special"];
 const STATUS_CONFIG = { draft: "Draft", scheduled: "Scheduled", in_progress: "In Progress", pending_approval: "Pending Approval", completed: "Completed" };

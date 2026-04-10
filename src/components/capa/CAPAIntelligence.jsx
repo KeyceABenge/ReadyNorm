@@ -9,6 +9,7 @@ import {
 
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { CAPARepo } from "@/lib/adapters/database";
 
 export default function CAPAIntelligence({ capa, allCapas, onSuggestionApply }) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);

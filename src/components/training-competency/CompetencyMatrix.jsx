@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Search, User, ClipboardCheck, Plus, Star, Award, AlertCircle } from "lucide-react";
+import { CompetencyRecordRepo } from "@/lib/adapters/database";
 
 const LEVEL_COLORS = {
   trainee: "bg-slate-100 text-slate-700",

@@ -1,7 +1,11 @@
 // @ts-nocheck
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { IncidentRepo as RecallEventRepo, ProductionLineRepo } from "@/lib/adapters/database";
+import {
+  IncidentRepo,
+  ProductionLineRepo,
+  RecallEventRepo
+} from "@/lib/adapters/database";
 import useOrganization from "@/components/auth/useOrganization";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

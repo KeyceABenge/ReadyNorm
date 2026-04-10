@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Plus, FolderOpen, Upload, FileText, Loader2, ExternalLink } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
+import { EvidenceRepo } from "@/lib/adapters/database";
 
 const FOLDER_LABELS = {
   access_reviews: "Access Reviews",

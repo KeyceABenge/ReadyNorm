@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
+import { PestVendorRepo } from "@/lib/adapters/database";
 
 export default function PestVendorSettings({ organizationId, vendors, onRefresh }) {
   const [modalOpen, setModalOpen] = useState(false);

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Plus, X, Bell, Shield, UserCheck, Trash2 } from "lucide-react";
+import { RiskSettingsRepo } from "@/lib/adapters/database";
 
 const CATEGORIES = ["food_safety", "quality", "operational", "regulatory", "supplier", "environmental", "personnel", "equipment"];
 

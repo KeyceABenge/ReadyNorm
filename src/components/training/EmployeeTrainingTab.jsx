@@ -1,6 +1,11 @@
 import { useState, useMemo } from "react";
 
-import { TrainingDocumentRepo, EmployeeTrainingRepo, TaskRepo } from "@/lib/adapters/database";
+import {
+  CompetencyEvaluationRepo,
+  EmployeeTrainingRepo,
+  TaskRepo,
+  TrainingDocumentRepo
+} from "@/lib/adapters/database";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

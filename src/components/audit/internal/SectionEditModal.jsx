@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Loader2, GripVertical } from "lucide-react";
 import { toast } from "sonner";
+import { AuditRequirementRepo, AuditSectionRepo } from "@/lib/adapters/database";
 
 export default function SectionEditModal({ open, onClose, section, organization, requirements, onSuccess }) {
   const [formData, setFormData] = useState({

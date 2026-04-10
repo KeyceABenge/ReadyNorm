@@ -7,6 +7,7 @@ import { ArrowLeft, Pencil, CheckCircle2, Loader2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
+import { PolicyRepo } from "@/lib/adapters/database";
 
 export default function SOC2PolicyViewer({ policy, onBack, onEdit, orgId }) {
   const [approving, setApproving] = useState(false);

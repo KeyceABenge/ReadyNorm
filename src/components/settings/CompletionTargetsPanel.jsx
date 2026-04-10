@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar, ChevronDown, ChevronUp, Loader2, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RoleConfigRepo, TaskRepo } from "@/lib/adapters/database";
 
 const ALL_DAYS = [
   { key: "monday", label: "Mon" },

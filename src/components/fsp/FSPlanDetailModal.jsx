@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Plus, History, CheckCircle2, GitBranch, AlertTriangle, Shield } from "lucide-react";
+import { FoodSafetyPlanRepo, ProcessStepRepo } from "@/lib/adapters/database";
 
 const STATUS_CONFIG = { draft: "Draft", under_review: "Under Review", approved: "Approved", active: "Active", superseded: "Superseded", archived: "Archived" };
 

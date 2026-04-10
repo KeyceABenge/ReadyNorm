@@ -1,7 +1,19 @@
 import { useState, useEffect } from "react";
 import { createPageUrl } from "@/utils";
 import { useQuery } from "@tanstack/react-query";
-import { OrganizationRepo, SOC2PolicyRepo, SOC2ControlRepo, SOC2EvidenceRepo, SOC2RiskRepo, SOC2VendorRepo } from "@/lib/adapters/database";
+import {
+  ControlRepo,
+  EvidenceRepo,
+  OrganizationRepo,
+  PolicyRepo,
+  RiskRepo,
+  SOC2ControlRepo,
+  SOC2EvidenceRepo,
+  SOC2PolicyRepo,
+  SOC2RiskRepo,
+  SOC2VendorRepo,
+  VendorRepo
+} from "@/lib/adapters/database";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Shield, Loader2 } from "lucide-react";
 import SOC2Overview from "@/components/soc2/SOC2Overview";

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { CrewRepo } from "@/lib/adapters/database";
 
 export default function ScheduleEmployeeManager({
   open,

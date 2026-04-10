@@ -4,7 +4,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getCurrentUser } from "@/lib/adapters/auth";
-import { OrganizationRepo, RiskEntryRepo } from "@/lib/adapters/database";
+import {
+  EmployeeRepo,
+  ManagementReviewRepo,
+  OrganizationRepo,
+  RiskEntryRepo,
+  RiskSettingsRepo
+} from "@/lib/adapters/database";
 import { useQuery } from "@tanstack/react-query";
 import { createPageUrl } from "@/utils";
 import { Link } from "react-router-dom";

@@ -1,7 +1,17 @@
 // @ts-nocheck
 import { useState, useEffect } from "react";
 import { getCurrentUser } from "@/lib/adapters/auth";
-import { OrganizationRepo, SanitationDowntimeRepo, CAPARepo, ProductionLineRepo, AreaRepo, TaskRepo } from "@/lib/adapters/database";
+import {
+  AreaRepo,
+  CAPARepo,
+  EmployeeRepo,
+  OrganizationRepo,
+  ProductionLineRepo,
+  SSOPRepo,
+  SanitationDowntimeRepo,
+  TaskRepo,
+  TrainingDocumentRepo
+} from "@/lib/adapters/database";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";

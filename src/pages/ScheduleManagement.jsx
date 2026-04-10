@@ -16,6 +16,7 @@ import { useScheduleCalculator } from "@/components/scheduling/useScheduleCalcul
 import { createPageUrl } from "@/utils";
 import ScheduleEmployeeManager from "@/components/scheduling/ScheduleEmployeeManager";
 import ShiftRequestsPanel from "@/components/scheduling/ShiftRequestsPanel";
+import { CrewRepo, CrewScheduleRepo, EmployeeRepo, EmployeeShiftRepo, OrganizationRepo, PlantExceptionRepo, RoleConfigRepo } from "@/lib/adapters/database";
 
 export default function ScheduleManagement() {
   const [crewModalOpen, setCrewModalOpen] = useState(false);

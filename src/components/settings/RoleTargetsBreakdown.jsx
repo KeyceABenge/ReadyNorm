@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Users, Target, EyeOff, Eye, Sparkles, Pencil, Check, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RoleConfigRepo } from "@/lib/adapters/database";
 
 
 function normalizeFrequency(f) {

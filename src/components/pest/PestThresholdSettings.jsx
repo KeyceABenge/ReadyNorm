@@ -13,6 +13,7 @@ import {
   AlertTriangle, Plus, Edit, Trash2, Mail
 } from "lucide-react";
 import { toast } from "sonner";
+import { PestThresholdRepo } from "@/lib/adapters/database";
 
 const PEST_TYPES = [
   { value: "rodents", label: "Rodents" },

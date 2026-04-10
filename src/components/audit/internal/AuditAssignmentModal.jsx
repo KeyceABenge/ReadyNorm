@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Trash2, User, Mail, Bell } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { ScheduledAuditRepo } from "@/lib/adapters/database";
 
 export default function AuditAssignmentModal({ open, onClose, audit, employees = [], onSuccess }) {
   const [formData, setFormData] = useState({

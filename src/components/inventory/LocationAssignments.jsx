@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, Package, MapPin, FlaskConical } from "lucide-react";
 import { toast } from "sonner";
+import { ChemicalLocationAssignmentRepo } from "@/lib/adapters/database";
 
 export default function LocationAssignments({ organizationId, chemicals, locations, assignments }) {
   const [formOpen, setFormOpen] = useState(false);

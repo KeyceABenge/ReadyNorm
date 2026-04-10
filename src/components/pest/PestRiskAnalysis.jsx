@@ -12,6 +12,7 @@ import {
 import { format, subDays, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from "recharts";
+import { PestRiskPredictionRepo } from "@/lib/adapters/database";
 
 const RISK_COLORS = {
   low: "#22c55e",

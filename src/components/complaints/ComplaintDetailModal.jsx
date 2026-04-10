@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Building2, User, Calendar, Package, Image, History, Link2, CheckCircle2, Send, AlertTriangle } from "lucide-react";
+import { CAPARepo, CustomerComplaintRepo } from "@/lib/adapters/database";
 
 const SEVERITY_CONFIG = { critical: { color: "bg-rose-100 text-rose-700", label: "Critical" }, major: { color: "bg-amber-100 text-amber-700", label: "Major" }, moderate: { color: "bg-yellow-100 text-yellow-700", label: "Moderate" }, minor: { color: "bg-slate-100 text-slate-600", label: "Minor" } };
 const STATUS_CONFIG = { received: { color: "bg-slate-100 text-slate-700", label: "Received" }, under_investigation: { color: "bg-blue-100 text-blue-700", label: "Investigating" }, root_cause_identified: { color: "bg-amber-100 text-amber-700", label: "Root Cause Found" }, corrective_action: { color: "bg-purple-100 text-purple-700", label: "Corrective Action" }, pending_response: { color: "bg-teal-100 text-teal-700", label: "Pending Response" }, responded: { color: "bg-cyan-100 text-cyan-700", label: "Responded" }, closed: { color: "bg-emerald-100 text-emerald-700", label: "Closed" }, escalated: { color: "bg-red-100 text-red-700", label: "Escalated" } };

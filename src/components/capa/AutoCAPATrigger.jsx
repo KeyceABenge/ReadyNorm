@@ -8,6 +8,10 @@ import { AlertTriangle, ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { generateUniqueCapaId } from "./capaUtils";
 import { cn } from "@/lib/utils";
+import {
+  CAPACommentRepo,
+  CAPARepo
+} from "@/lib/adapters/database";
 
 /**
  * Auto-CAPA Trigger Component

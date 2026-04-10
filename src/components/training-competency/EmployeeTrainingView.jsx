@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { format, addDays } from "date-fns";
 import { Search, User, Plus, Clock, CheckCircle2, AlertTriangle, XCircle, FileText, ChevronDown, ChevronRight } from "lucide-react";
+import { TrainingRecordRepo } from "@/lib/adapters/database";
 
 export default function EmployeeTrainingView({ employees, trainingRecords, competencyRecords, matrices, trainingDocs, organizationId, settings, user, onRefresh }) {
   const [search, setSearch] = useState("");

@@ -8,6 +8,10 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import {
+  CAPACommentRepo,
+  CAPARepo
+} from "@/lib/adapters/database";
 
 export default function CAPAEvidenceUploader({ capa, organization, user, onUpdate }) {
   const [isUploading, setIsUploading] = useState(false);

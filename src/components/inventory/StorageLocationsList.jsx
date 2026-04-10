@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Pencil, Trash2, MapPin } from "lucide-react";
 import { toast } from "sonner";
+import { ChemicalStorageLocationRepo } from "@/lib/adapters/database";
 
 export default function StorageLocationsList({ organizationId, locations }) {
   const [formOpen, setFormOpen] = useState(false);

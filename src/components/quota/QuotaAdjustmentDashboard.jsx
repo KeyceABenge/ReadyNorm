@@ -14,6 +14,7 @@ import {
 import { format, parseISO, startOfDay, endOfDay, startOfWeek, endOfWeek, 
   startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 import { toast } from "sonner";
+import { EmployeeRepo, EmployeeSessionRepo, EmployeeTrainingRepo, SiteSettingsRepo, TaskRepo } from "@/lib/adapters/database";
 
 export default function QuotaAdjustmentDashboard({ organizationId, fatigueSignals = null }) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);

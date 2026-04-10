@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import { toast } from "sonner";
 import { Settings, Plus, X, UserCheck, Bell, Shield, Trash2 } from "lucide-react";
+import { TrainingCompetencySettingsRepo } from "@/lib/adapters/database";
 
 export default function TrainingCompetencySettingsPanel({ settings, organizationId, employees, onRefresh }) {
   const [formData, setFormData] = useState({

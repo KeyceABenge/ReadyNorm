@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { ZoomIn, ZoomOut, Layers, AlertTriangle, CheckCircle2, Upload, Plus, Loader2 } from "lucide-react";
 import { format, parseISO, subDays } from "date-fns";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { FacilityMapRepo } from "@/lib/adapters/database";
 
 const ZONE_COLORS = {
   zone_1: "#ef4444",

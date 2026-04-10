@@ -1,7 +1,12 @@
 // @ts-nocheck
 import { useState, useEffect } from "react";
-import { ChemicalLocationAssignmentRepo, ChemicalStorageLocationRepo, ChemicalCountEntryRepo } from "@/lib/adapters/database";
-import { ChemicalInventorySettingsRepo, ChemicalInventoryRecordRepo } from "@/lib/adapters/database";
+import {
+  ChemicalCountEntryRepo,
+  ChemicalInventoryRecordRepo,
+  ChemicalInventorySettingsRepo,
+  ChemicalLocationAssignmentRepo,
+  ChemicalStorageLocationRepo
+} from "@/lib/adapters/database";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";

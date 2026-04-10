@@ -9,6 +9,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
 import ChangeRequestFormModal from "./ChangeRequestFormModal";
+import { DocumentChangeRequestRepo } from "@/lib/adapters/database";
 
 const STATUS_CONFIG = {
   draft: { label: "Draft", color: "bg-slate-100 text-slate-700" },

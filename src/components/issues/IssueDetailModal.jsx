@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { MapPin, User, Calendar, CheckCircle2, Image, History } from "lucide-react";
+import { CAPARepo, IssueRepo } from "@/lib/adapters/database";
 
 const SEVERITY_CONFIG = { critical: { color: "bg-rose-100 text-rose-700", label: "Critical" }, major: { color: "bg-amber-100 text-amber-700", label: "Major" }, moderate: { color: "bg-yellow-100 text-yellow-700", label: "Moderate" }, minor: { color: "bg-slate-100 text-slate-600", label: "Minor" } };
 const STATUS_CONFIG = { open: { color: "bg-slate-100 text-slate-700", label: "Open" }, under_review: { color: "bg-blue-100 text-blue-700", label: "Under Review" }, containment: { color: "bg-amber-100 text-amber-700", label: "Containment" }, corrective_action: { color: "bg-purple-100 text-purple-700", label: "Corrective Action" }, capa_required: { color: "bg-rose-100 text-rose-700", label: "CAPA Required" }, pending_verification: { color: "bg-teal-100 text-teal-700", label: "Pending Verification" }, closed: { color: "bg-emerald-100 text-emerald-700", label: "Closed" }, escalated: { color: "bg-red-100 text-red-700", label: "Escalated" } };

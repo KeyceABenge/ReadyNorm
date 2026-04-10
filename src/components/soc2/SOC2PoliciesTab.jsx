@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import SOC2PolicyModal from "./SOC2PolicyModal";
 import SOC2PolicyViewer from "./SOC2PolicyViewer";
 import { POLICY_TEMPLATES } from "./soc2PolicyTemplates";
+import { PolicyRepo } from "@/lib/adapters/database";
 
 const CATEGORY_LABELS = {
   security_governance: "Security & Governance",

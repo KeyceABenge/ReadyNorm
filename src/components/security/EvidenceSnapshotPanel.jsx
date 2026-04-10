@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Camera, CheckCircle2, Loader2, Clock, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { EvidenceRepo } from "@/lib/adapters/database";
 
 export default function EvidenceSnapshotPanel({ organizationId, organization, settings }) {
   const [capturing, setCapturing] = useState(false);

@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import { toast } from "sonner";
 import { Plus, X, Bell, Shield, UserCheck, Trash2, Building2 } from "lucide-react";
+import { ComplaintSettingsRepo } from "@/lib/adapters/database";
 
 const COMPLAINT_TYPES = ["foreign_material", "quality_defect", "food_safety", "allergen", "labeling", "packaging", "taste_odor", "appearance", "short_weight", "spoilage", "other"];
 const typeLabels = { foreign_material: "Foreign Material", quality_defect: "Quality Defect", food_safety: "Food Safety", allergen: "Allergen", labeling: "Labeling", packaging: "Packaging", taste_odor: "Taste/Odor", appearance: "Appearance", short_weight: "Short Weight", spoilage: "Spoilage", other: "Other" };

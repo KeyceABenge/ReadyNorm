@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { toast } from "sonner";
+import { ControlledDocumentRepo } from "@/lib/adapters/database";
 
 export default function DocumentReviewQueue({ documents, versions, changeRequests, organizationId, user, onRefresh }) {
   const [activeTab, setActiveTab] = useState("pending");

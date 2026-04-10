@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search, Edit2, Trash2, Camera, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
+import { EMPSiteRepo } from "@/lib/adapters/database";
 
 const ZONE_OPTIONS = [
   { value: "zone_1", label: "Zone 1 - Product Contact", color: "#ef4444" },

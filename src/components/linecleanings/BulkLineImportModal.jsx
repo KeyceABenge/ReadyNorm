@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { AreaRepo, AssetGroupRepo, AssetRepo, ProductionLineRepo } from "@/lib/adapters/database";
 
 const CSV_TEMPLATE_HEADERS = [
   "production_line_name",

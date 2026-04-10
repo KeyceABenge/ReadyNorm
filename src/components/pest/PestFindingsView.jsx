@@ -13,6 +13,7 @@ import { createPageUrl } from "@/utils";
 import AutoCAPATrigger from "@/components/capa/AutoCAPATrigger";
 
 import { toast } from "sonner";
+import { PestFindingRepo } from "@/lib/adapters/database";
 
 const ACTIVITY_COLORS = {
   none: "bg-slate-100 text-slate-600",

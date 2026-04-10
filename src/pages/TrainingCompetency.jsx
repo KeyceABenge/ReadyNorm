@@ -13,6 +13,17 @@ import CompetencyMatrix from "@/components/training-competency/CompetencyMatrix.
 import TrainingGapAnalysis from "@/components/training-competency/TrainingGapAnalysis.jsx";
 import TrainingReports from "@/components/training-competency/TrainingReports.jsx";
 import TrainingCompetencySettingsPanel from "@/components/training-competency/TrainingCompetencySettingsPanel.jsx";
+import {
+  AreaRepo,
+  CompetencyRecordRepo,
+  EmployeeRepo,
+  OrganizationRepo,
+  TaskRepo,
+  TrainingCompetencySettingsRepo,
+  TrainingDocumentRepo,
+  TrainingMatrixRepo,
+  TrainingRecordRepo
+} from "@/lib/adapters/database";
 
 export default function TrainingCompetency() {
   const [activeTab, setActiveTab] = useState("dashboard");

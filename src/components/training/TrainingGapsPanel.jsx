@@ -7,6 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { AlertTriangle, GraduationCap, User, ClipboardList, CheckCircle2, Loader2, ChevronDown } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
+import { TaskTrainingGapRepo } from "@/lib/adapters/database";
 
 export default function TrainingGapsPanel({ organizationId }) {
   const [isOpen, setIsOpen] = useState(false);

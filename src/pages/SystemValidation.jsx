@@ -11,6 +11,7 @@ import { createPageUrl } from "@/utils";
 import FailureSimulator from "@/components/validation/FailureSimulator";
 import ValidationResults from "@/components/validation/ValidationResults";
 import SystemHealthCheck from "@/components/validation/SystemHealthCheck";
+import { AuditFindingRepo, CAPARepo, EMPSampleRepo, OrganizationRepo, PestFindingRepo, RiskEntryRepo, SanitationDowntimeRepo } from "@/lib/adapters/database";
 
 export default function SystemValidation() {
   const [activeTab, setActiveTab] = useState("simulate");

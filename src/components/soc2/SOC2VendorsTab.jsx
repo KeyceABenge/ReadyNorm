@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Plus, Truck, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
+import { VendorRepo } from "@/lib/adapters/database";
 
 export default function SOC2VendorsTab({ orgId, vendors }) {
   const [modalOpen, setModalOpen] = useState(false);

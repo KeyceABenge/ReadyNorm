@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { ControlRepo } from "@/lib/adapters/database";
 
 export default function SOC2ControlModal({ open, onOpenChange, control, orgId }) {
   const [form, setForm] = useState({});

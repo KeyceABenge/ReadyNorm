@@ -13,6 +13,7 @@ import { Plus, Search, FlaskConical, Clock, XCircle, AlertTriangle, Upload } fro
 import { format, parseISO, addDays } from "date-fns";
 import { toast } from "sonner";
 import AutoCAPATrigger from "@/components/capa/AutoCAPATrigger";
+import { EMPSampleRepo, EMPSiteRepo } from "@/lib/adapters/database";
 
 const TEST_TYPES = [
   { value: "listeria_spp", label: "Listeria spp." },

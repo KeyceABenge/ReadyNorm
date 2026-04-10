@@ -15,6 +15,11 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { generateUniqueCapaId } from "./capaUtils";
+import {
+  CAPAActionRepo,
+  CAPACommentRepo,
+  CAPARepo
+} from "@/lib/adapters/database";
 
 const STEPS = [
   { id: 1, title: "Basics", icon: FileText },

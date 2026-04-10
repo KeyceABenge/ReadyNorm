@@ -16,6 +16,7 @@ import { createPageUrl } from "@/utils";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import AutoCAPATrigger from "@/components/capa/AutoCAPATrigger";
+import { AuditFindingRepo } from "@/lib/adapters/database";
 
 const severityConfig = {
   minor_gap: { label: "Minor", color: "bg-yellow-100 text-yellow-800 border-yellow-200", icon: AlertTriangle },

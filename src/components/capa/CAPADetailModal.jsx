@@ -17,6 +17,11 @@ import CAPAActionEditModal from "./CAPAActionEditModal";
 import { toast } from "sonner";
 import { format, differenceInDays, isBefore, addDays } from "date-fns";
 import { cn } from "@/lib/utils";
+import {
+  CAPAActionRepo,
+  CAPACommentRepo,
+  CAPARepo
+} from "@/lib/adapters/database";
 
 const severityColors = {
   low: "bg-blue-100 text-blue-800",

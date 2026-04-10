@@ -16,6 +16,13 @@ import {
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { generateUniqueCapaId } from "../capa/capaUtils";
+import {
+  CAPARepo,
+  PestDeviceRepo,
+  PestFindingRepo,
+  PestLocationRepo,
+  PestServiceReportRepo
+} from "@/lib/adapters/database";
 
 export default function PestReportUploader({ 
   organizationId, vendors, devices, thresholds, serviceReports, locations = [], onRefresh, user 

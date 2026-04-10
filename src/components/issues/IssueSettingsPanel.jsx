@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Plus, X, Bell, Shield, UserCheck, Trash2 } from "lucide-react";
+import { IssueSettingsRepo } from "@/lib/adapters/database";
 
 const CATEGORIES = ["quality", "food_safety", "sanitation", "pest", "environmental", "audit", "customer", "operational", "other"];
 const categoryLabels = { quality: "Quality", food_safety: "Food Safety", sanitation: "Sanitation", pest: "Pest Control", environmental: "Environmental", audit: "Audit", customer: "Customer", operational: "Operational", other: "Other" };

@@ -1,4 +1,5 @@
 
+import { CAPARepo } from "@/lib/adapters/database";
 
 /**
  * Generate a unique CAPA ID in the format CAPA-YYYY-XXXX

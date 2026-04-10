@@ -2,7 +2,14 @@
 import { useState, useMemo, useEffect } from "react";
 import { createPageUrl } from "@/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { OrganizationRepo, TaskRepo, EmployeeTrainingRepo } from "@/lib/adapters/database";
+import {
+  ComplianceEvidenceRepo,
+  ComplianceFrameworkRepo,
+  ComplianceRequirementRepo,
+  EmployeeTrainingRepo,
+  OrganizationRepo,
+  TaskRepo
+} from "@/lib/adapters/database";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

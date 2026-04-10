@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { format, addMonths, startOfQuarter, startOfYear } from "date-fns";
 import AuditAssignmentModal from "./AuditAssignmentModal.jsx";
 import AuditCalendarView from "./AuditCalendarView.jsx";
+import { AuditPlanRepo, ScheduledAuditRepo } from "@/lib/adapters/database";
 
 export default function AuditPlanManager({ 
   organization, user, standards, sections, plans, scheduledAudits, employees = [], onRefresh 

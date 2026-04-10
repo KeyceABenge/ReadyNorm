@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { addMonths, format } from "date-fns";
+import { RiskEntryRepo } from "@/lib/adapters/database";
 
 const CATEGORIES = ["food_safety", "quality", "operational", "regulatory", "supplier", "environmental", "personnel", "equipment", "other"];
 const SOURCES = ["manual", "sanitation", "emp", "pest", "audit", "capa", "complaint", "supplier", "incident", "downtime"];

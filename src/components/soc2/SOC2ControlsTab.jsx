@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import SOC2ControlModal from "./SOC2ControlModal";
 import { CONTROL_TEMPLATES } from "./soc2ControlTemplates";
 import { getComplianceStatus, getNextDueDate } from "./soc2ComplianceEngine";
+import { ControlRepo, EvidenceRepo } from "@/lib/adapters/database";
 
 const CATEGORY_LABELS = {
   access_control: "Access Control",

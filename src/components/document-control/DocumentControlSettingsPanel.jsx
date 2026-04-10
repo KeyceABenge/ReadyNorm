@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Plus, X, Save, Users, FileText, Bell, Archive } from "lucide-react";
 import { toast } from "sonner";
+import { DocumentControlSettingsRepo } from "@/lib/adapters/database";
 
 export default function DocumentControlSettingsPanel({ settings, organizationId, employees, onRefresh }) {
   const [saving, setSaving] = useState(false);

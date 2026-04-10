@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { DocumentChangeRequestRepo } from "@/lib/adapters/database";
 
 export default function ChangeRequestFormModal({ open, onOpenChange, changeRequest, documents, organizationId, user, onSaved }) {
   const [saving, setSaving] = useState(false);

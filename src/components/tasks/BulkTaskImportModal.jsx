@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { TaskRepo, TrainingDocumentRepo } from "@/lib/adapters/database";
 
 const CSV_TEMPLATE_HEADERS = [
   "task_name",

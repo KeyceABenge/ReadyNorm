@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { addMonths, format } from "date-fns";
+import { FoodSafetyPlanRepo } from "@/lib/adapters/database";
 
 export default function FSPlanFormModal({ open, onOpenChange, organizationId, user, employees, onSuccess }) {
   const [isSubmitting, setIsSubmitting] = useState(false);

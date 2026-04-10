@@ -9,6 +9,7 @@ import {
 import { toast } from "sonner";
 import { format, addDays } from "date-fns";
 import { generateUniqueCapaId } from "@/components/capa/capaUtils";
+import { AuditFindingRepo, CAPARepo, EMPSampleRepo, PestFindingRepo, RiskEntryRepo, SanitationDowntimeRepo, TaskRepo } from "@/lib/adapters/database";
 
 const SIMULATION_SCENARIOS = [
   {

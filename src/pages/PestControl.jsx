@@ -1,6 +1,20 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { AreaRepo as PestLocationRepo, AreaRepo as PestVendorRepo, PestDeviceRepo, PestThresholdRepo, PestServiceReportRepo, PestFindingRepo, PestFindingRepo as PestRiskPredictionRepo, FacilityMapRepo, AreaRepo, ProductionLineRepo, CAPARepo as CARARepo, TaskRepo, DrainCleaningRecordRepo } from "@/lib/adapters/database";
+import {
+  AreaRepo,
+  CAPARepo,
+  DrainCleaningRecordRepo,
+  FacilityMapRepo,
+  PestDeviceRepo,
+  PestFindingRepo,
+  PestLocationRepo,
+  PestRiskPredictionRepo,
+  PestServiceReportRepo,
+  PestThresholdRepo,
+  PestVendorRepo,
+  ProductionLineRepo,
+  TaskRepo
+} from "@/lib/adapters/database";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -94,7 +108,7 @@ export default function PestControlPage() {
 
   const { data: capas = [] } = useQuery({
     queryKey: ["capas_pest", organizationId],
-    queryFn: () => CARARepo.filter({ organization_id: organizationId, source: "pest" }),
+    queryFn: () => CAPARepo.filter({ organization_id: organizationId, source: "pest" }),
     enabled: !!organizationId
   });
 

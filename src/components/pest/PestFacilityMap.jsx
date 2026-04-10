@@ -11,6 +11,7 @@ import {
 import { subDays } from "date-fns";
 import { toast } from "sonner";
 import { getProxiedImageUrl } from "@/lib/imageProxy";
+import { FacilityMapRepo, PestDeviceRepo } from "@/lib/adapters/database";
 
 const DEVICE_TYPE_ICONS = {
   ilt: "💡",

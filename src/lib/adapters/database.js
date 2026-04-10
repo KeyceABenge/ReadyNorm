@@ -164,6 +164,39 @@ const TABLE_MAP = {
   DiverterSettings: "diverter_settings",
   // Label verification
   LabelVerification: "label_verifications",
+  // CAPA comments
+  CAPAComment: "capa_comments",
+  // Document control
+  DocumentChangeRequest: "document_change_requests",
+  DocumentControlSettings: "document_control_settings",
+  DocumentVersion: "document_versions",
+  DocumentAcknowledgment: "document_acknowledgments",
+  // Handoff settings
+  HandoffSettings: "handoff_settings",
+  // Pest extras
+  PestLocation: "pest_locations",
+  PestVendor: "pest_vendors",
+  // Recall
+  RecallEvent: "recall_events",
+  // Risk/Management review
+  ManagementReview: "management_reviews",
+  RiskSettings: "risk_settings",
+  // Training extras
+  TrainingMatrix: "training_matrices",
+  TrainingCompetencySettings: "training_competency_settings",
+  // SOC2
+  SOC2Evidence: "soc2_evidence",
+  SOC2EvidencePackage: "soc2_evidence_packages",
+  SOC2Policy: "soc2_policies",
+  SOC2Risk: "soc2_risks",
+  SOC2Vendor: "soc2_vendors",
+  SOC2Control: "soc2_controls",
+  // Compliance
+  ComplianceFramework: "compliance_frameworks",
+  ComplianceRequirement: "compliance_requirements",
+  ComplianceEvidence: "compliance_evidence",
+  // Water testing
+  WaterTest: "water_tests",
 };
 
 // Parse Base44-style sort: "-created_date" → { column: "created_date", ascending: false }
@@ -607,6 +640,49 @@ export const ChemicalProductRepo = getRepository("ChemicalProduct");
 export const ChemicalLocationRepo = getRepository("ChemicalLocation");
 export const DiverterSettingsRepo = getRepository("DiverterSettings");
 export const LabelVerificationRepo = getRepository("LabelVerification");
+
+// ─── CAPA comments ───
+export const CAPACommentRepo = getRepository("CAPAComment");
+
+// ─── Document control extras ───
+export const DocumentChangeRequestRepo = getRepository("DocumentChangeRequest");
+export const DocumentControlSettingsRepo = getRepository("DocumentControlSettings");
+export const DocumentVersionRepo = getRepository("DocumentVersion");
+export const DocumentAcknowledgmentRepo = getRepository("DocumentAcknowledgment");
+
+// ─── Handoff settings ───
+export const HandoffSettingsRepo = getRepository("HandoffSettings");
+
+// ─── Pest extras ───
+export const PestLocationRepo = getRepository("PestLocation");
+export const PestVendorRepo = getRepository("PestVendor");
+
+// ─── Recall ───
+export const RecallEventRepo = getRepository("RecallEvent");
+
+// ─── Risk / management review ───
+export const ManagementReviewRepo = getRepository("ManagementReview");
+export const RiskSettingsRepo = getRepository("RiskSettings");
+
+// ─── Training extras ───
+export const TrainingMatrixRepo = getRepository("TrainingMatrix");
+export const TrainingCompetencySettingsRepo = getRepository("TrainingCompetencySettings");
+
+// ─── SOC2 ───
+export const EvidenceRepo = getRepository("SOC2Evidence");
+export const EvidencePackageRepo = getRepository("SOC2EvidencePackage");
+export const PolicyRepo = getRepository("SOC2Policy");
+export const RiskRepo = getRepository("SOC2Risk");
+export const VendorRepo = getRepository("SOC2Vendor");
+export const ControlRepo = getRepository("SOC2Control");
+
+// ─── Compliance ───
+export const ComplianceFrameworkRepo = getRepository("ComplianceFramework");
+export const ComplianceRequirementRepo = getRepository("ComplianceRequirement");
+export const ComplianceEvidenceRepo = getRepository("ComplianceEvidence");
+
+// ─── Water testing ───
+export const WaterTestRepo = getRepository("WaterTest");
 
 // ─── AI-generated in-memory repositories (for predictions/analysis) ───
 // These don't have persistent Supabase tables; they're computed on-demand

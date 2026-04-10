@@ -13,6 +13,7 @@ import {
   Building2, Plus, Edit, Trash2, MapPin, Bug
 } from "lucide-react";
 import { toast } from "sonner";
+import { PestLocationRepo } from "@/lib/adapters/database";
 
 export default function PestLocationSettings({ organizationId, locations, vendors, devices, onRefresh }) {
   const [modalOpen, setModalOpen] = useState(false);

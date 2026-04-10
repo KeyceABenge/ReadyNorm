@@ -8,6 +8,7 @@ import {
   FileText, Loader2, CheckCircle2, Package, Brain
 } from "lucide-react";
 import { format, subDays } from "date-fns";
+import { EvidencePackageRepo } from "@/lib/adapters/database";
 
 const TRUST_CATEGORIES = [
   { id: "security", label: "Security", description: "Protection against unauthorized access" },

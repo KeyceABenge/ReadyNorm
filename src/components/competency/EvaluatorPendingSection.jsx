@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { parseISO, differenceInDays } from "date-fns";
 import CompetencyEvaluationModal from "./CompetencyEvaluationModal";
+import { CompetencyEvaluationRepo, EvaluatorSettingsRepo, SSOPRepo } from "@/lib/adapters/database";
 
 export default function EvaluatorPendingSection({ employee, organizationId }) {
   const [selectedEvaluation, setSelectedEvaluation] = useState(null);

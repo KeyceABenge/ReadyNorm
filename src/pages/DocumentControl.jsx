@@ -2,7 +2,18 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { getCurrentUser } from "@/lib/adapters/auth";
-import { OrganizationRepo, ControlledDocumentRepo, ControlledDocumentRepo as DocumentVersionRepo, CAPARepo as DocumentChangeRequestRepo, TrainingRecordRepo as DocumentAcknowledgmentRepo, SiteSettingsRepo as DocumentControlSettingsRepo, EmployeeRepo } from "@/lib/adapters/database";
+import {
+  CAPARepo,
+  ControlledDocumentRepo,
+  DocumentAcknowledgmentRepo,
+  DocumentChangeRequestRepo,
+  DocumentControlSettingsRepo,
+  DocumentVersionRepo,
+  EmployeeRepo,
+  OrganizationRepo,
+  SiteSettingsRepo,
+  TrainingRecordRepo
+} from "@/lib/adapters/database";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";

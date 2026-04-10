@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Plus, AlertTriangle, Loader2, ShieldCheck, FileText } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { RiskRepo } from "@/lib/adapters/database";
 
 const RISK_COLORS = {
   low: "bg-emerald-100 text-emerald-700",

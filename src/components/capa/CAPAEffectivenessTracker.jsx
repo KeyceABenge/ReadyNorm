@@ -12,6 +12,10 @@ import {
 import { toast } from "sonner";
 import { format, differenceInDays, isBefore } from "date-fns";
 import { cn } from "@/lib/utils";
+import {
+  CAPACommentRepo,
+  CAPARepo
+} from "@/lib/adapters/database";
 
 export default function CAPAEffectivenessTracker({ capas, user, onUpdate }) {
   const [selectedCapa, setSelectedCapa] = useState(null);

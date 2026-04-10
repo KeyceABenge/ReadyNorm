@@ -8,6 +8,10 @@ import { Card } from "@/components/ui/card";
 import { Loader2, Plus, X, History, User } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import {
+  CAPAActionRepo,
+  CAPACommentRepo
+} from "@/lib/adapters/database";
 
 export default function CAPAActionEditModal({ open, onClose, action, organization, user, onUpdate }) {
   const [isSubmitting, setIsSubmitting] = useState(false);

@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Upload, FileText, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { getNextColorIndex } from "./auditColors";
+import { AuditRequirementRepo, AuditSectionRepo, AuditStandardRepo } from "@/lib/adapters/database";
 
 export default function StandardUploadModal({ open, onClose, organization, existingStandards = [], onSuccess }) {
   const [formData, setFormData] = useState({

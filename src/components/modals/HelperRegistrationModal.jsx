@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, HandHelping, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { createPageUrl } from "@/utils";
+import { HelperRepo } from "@/lib/adapters/database";
 
 export default function HelperRegistrationModal({ open, onOpenChange, organizationId, siteCode }) {
   const [name, setName] = useState("");

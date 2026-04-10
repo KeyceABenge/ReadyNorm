@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { Plus, Edit2, Trash2, AlertTriangle, FlaskConical } from "lucide-react";
 import { toast } from "sonner";
+import { EMPThresholdRepo } from "@/lib/adapters/database";
 
 const TEST_TYPES = [
   { value: "listeria_spp", label: "Listeria spp." },

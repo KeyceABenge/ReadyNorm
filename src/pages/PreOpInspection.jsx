@@ -5,8 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
-  OrganizationRepo, ProductionLineRepo, AreaRepo, AssetRepo,
-  PreOpInspectionRepo, AreaSignOffRepo
+  AreaRepo,
+  AreaSignOffRepo,
+  AssetRepo,
+  OrganizationRepo,
+  PreOpInspectionRepo,
+  ProductionLineRepo,
+  SanitaryReportRepo
 } from "@/lib/adapters/database";
 import { createPageUrl } from "@/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";

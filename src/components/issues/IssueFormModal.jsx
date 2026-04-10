@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { addDays, format } from "date-fns";
 import { Upload, X, Loader2 } from "lucide-react";
+import { IssueRepo } from "@/lib/adapters/database";
 
 const CATEGORIES = [
   { value: "quality", label: "Quality" }, { value: "food_safety", label: "Food Safety" },

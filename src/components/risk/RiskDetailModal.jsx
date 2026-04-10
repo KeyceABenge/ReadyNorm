@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { format, addMonths } from "date-fns";
 import { TrendingUp, TrendingDown, Minus, History, Plus, CheckCircle2, AlertTriangle } from "lucide-react";
+import { RiskEntryRepo } from "@/lib/adapters/database";
 
 const RISK_LEVEL_CONFIG = { low: { color: "bg-emerald-100 text-emerald-700" }, medium: { color: "bg-yellow-100 text-yellow-700" }, high: { color: "bg-orange-100 text-orange-700" }, critical: { color: "bg-rose-100 text-rose-700" } };
 const STATUS_CONFIG = { identified: { color: "bg-slate-100 text-slate-700", label: "Identified" }, assessing: { color: "bg-blue-100 text-blue-700", label: "Assessing" }, mitigating: { color: "bg-purple-100 text-purple-700", label: "Mitigating" }, monitoring: { color: "bg-cyan-100 text-cyan-700", label: "Monitoring" }, accepted: { color: "bg-amber-100 text-amber-700", label: "Accepted" }, closed: { color: "bg-emerald-100 text-emerald-700", label: "Closed" }, escalated: { color: "bg-rose-100 text-rose-700", label: "Escalated" } };

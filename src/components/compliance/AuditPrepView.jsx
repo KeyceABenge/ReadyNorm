@@ -15,6 +15,7 @@ import { format, parseISO, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import jsPDF from "jspdf";
 import { toast } from "sonner";
+import { AuditLogRepo, EmployeeTrainingRepo, TaskRepo } from "@/lib/adapters/database";
 
 export default function AuditPrepView({ frameworks, requirements, evidence, organizationId }) {
   const [selectedFramework, setSelectedFramework] = useState(null);

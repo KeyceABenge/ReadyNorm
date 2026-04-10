@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Settings, Users, Bell, Save, Loader2, Plus, Trash2, Mail } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { EmployeeRepo, SiteSettingsRepo } from "@/lib/adapters/database";
 
 export default function AuditSettings({ organization }) {
   const [saving, setSaving] = useState(false);

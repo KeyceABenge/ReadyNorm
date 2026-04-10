@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Loader2, Brain, TrendingUp, TrendingDown, Minus, CheckCircle2, Zap, Droplets, Bug, GraduationCap, ClipboardCheck } from "lucide-react";
 import { format, parseISO, subDays } from "date-fns";
 import { toast } from "sonner";
+import { EMPRiskPredictionRepo } from "@/lib/adapters/database";
 
 const RISK_COLORS = {
   low: { bg: "bg-emerald-100", text: "text-emerald-700", border: "border-emerald-300" },

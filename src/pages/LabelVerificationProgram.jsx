@@ -1,7 +1,10 @@
 // @ts-nocheck
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { TrainingRecordRepo as LabelVerificationRepo } from "@/lib/adapters/database";
+import {
+  LabelVerificationRepo,
+  TrainingRecordRepo
+} from "@/lib/adapters/database";
 import useOrganization from "@/components/auth/useOrganization";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

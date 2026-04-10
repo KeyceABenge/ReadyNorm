@@ -28,6 +28,7 @@ import {
 import { format, parseISO, isWithinInterval, subDays } from "date-fns";
 import PestMapExportButton from "./PestMapExportButton";
 import { toast } from "sonner";
+import { FacilityMapRepo, PestEscalationMarkerRepo } from "@/lib/adapters/database";
 
 const PEST_CATEGORIES = [
   { id: "flies", label: "Flies / ILTs", icon: "🪰", color: "blue" },

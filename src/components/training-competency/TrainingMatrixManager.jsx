@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 
 import { toast } from "sonner";
 import { Plus, Search, Grid3X3, FileText, Users, Pencil, Trash2, CheckCircle2 } from "lucide-react";
+import { TrainingMatrixRepo } from "@/lib/adapters/database";
 
 export default function TrainingMatrixManager({ matrices, trainingDocs, employees, areas, tasks, organizationId, settings, onRefresh }) {
   const [search, setSearch] = useState("");

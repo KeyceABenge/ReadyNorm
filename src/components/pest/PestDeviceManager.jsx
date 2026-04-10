@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { subDays } from "date-fns";
 import { toast } from "sonner";
+import { PestDeviceRepo } from "@/lib/adapters/database";
 
 const DEVICE_TYPES = [
   { value: "ilt", label: "Insect Light Trap (ILT)" },

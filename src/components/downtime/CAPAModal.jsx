@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Plus, Trash2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { toast } from "sonner";
+import { CAPARepo, SanitationDowntimeRepo } from "@/lib/adapters/database";
 
 const PRIORITIES = [
   { value: "low", label: "Low", color: "bg-slate-100 text-slate-800" },

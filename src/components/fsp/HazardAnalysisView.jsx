@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "sonner";
 import { Plus, Search, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { HazardAnalysisRepo } from "@/lib/adapters/database";
 
 const HAZARD_TYPE_CONFIG = {
   biological: { color: "bg-rose-100 text-rose-700", label: "Biological" },

@@ -1,5 +1,10 @@
 import { useState, useEffect } from "react";
-import { OrganizationRepo, ShiftHandoffRepo, SiteSettingsRepo as HandoffSettingsRepo } from "@/lib/adapters/database";
+import {
+  HandoffSettingsRepo,
+  OrganizationRepo,
+  ShiftHandoffRepo,
+  SiteSettingsRepo
+} from "@/lib/adapters/database";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

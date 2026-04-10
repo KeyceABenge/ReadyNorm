@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ChevronDown, ChevronUp, Edit2, Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { EmployeeGroupRepo, EmployeeRepo } from "@/lib/adapters/database";
 
 export default function EmployeeListManager({ employees, groups = [], onGroupSelect }) {
   const [editingEmployee, setEditingEmployee] = useState(null);

@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "sonner";
 import { format, addDays } from "date-fns";
 import { Plus, Search, Shield, CheckCircle2, Clock } from "lucide-react";
+import { PreventiveControlRepo } from "@/lib/adapters/database";
 
 const CONTROL_TYPE_CONFIG = {
   process: { color: "bg-blue-100 text-blue-700", label: "Process Control" },

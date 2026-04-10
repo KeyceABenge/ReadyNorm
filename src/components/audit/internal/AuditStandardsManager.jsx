@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import StandardUploadModal from "./StandardUploadModal.jsx";
 import SectionEditModal from "./SectionEditModal.jsx";
 import { COLOR_PALETTE, STANDARD_TYPE_LABELS, getStandardColorByIndex } from "./auditColors";
+import { AuditRequirementRepo, AuditSectionRepo, AuditStandardRepo } from "@/lib/adapters/database";
 
 export default function AuditStandardsManager({ 
   organization, standards, sections, requirements, onRefresh 

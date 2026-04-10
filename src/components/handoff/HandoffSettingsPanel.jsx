@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Settings, Save, Loader2, Mail, Clock, Plus, X } from "lucide-react";
 import { toast } from "sonner";
+import { HandoffSettingsRepo } from "@/lib/adapters/database";
 
 export default function HandoffSettingsPanel({ organizationId, settings, onSaved }) {
   const [formData, setFormData] = useState({

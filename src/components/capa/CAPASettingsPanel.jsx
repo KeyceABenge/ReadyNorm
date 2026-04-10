@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, X, Save, Loader2 } from "lucide-react";
 
 import { toast } from "sonner";
+import { CAPASettingsRepo } from "@/lib/adapters/database";
 
 export default function CAPASettingsPanel({ organization, settings, onUpdate }) {
   const [isLoading, setIsLoading] = useState(false);

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { exportSchedulePDF } from "./SchedulePDFExport";
 import { computeAreaTimeline } from "./areaTimelineCalc";
 import { computeLineTimeline } from "./lineTimelineCalc";
+import { AreaSignOffRepo, LineCleaningAssignmentRepo } from "@/lib/adapters/database";
 
 
 const STATUS_COLORS = {

@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Loader2, GraduationCap, CheckCircle2, FileText, ExternalLink } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { HelperTrainingRepo, TrainingDocumentRepo } from "@/lib/adapters/database";
 
 export default function HelperTrainingModal({ open, onOpenChange, helper, task, onComplete }) {
   const [viewingDoc, setViewingDoc] = useState(null);

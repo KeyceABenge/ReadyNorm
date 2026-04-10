@@ -15,6 +15,7 @@ import {
   Loader2, RefreshCw, Play, BarChart3, Minus, Plus, FileWarning, Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AreaSignOffRepo, CompetencyEvaluationRepo, DrainLocationRepo, EmployeeRepo, RainDiverterRepo, TaskRepo } from "@/lib/adapters/database";
 
 const SCENARIO_TYPES = {
   staffing: { label: "Staffing Changes", icon: Users, color: "blue" },

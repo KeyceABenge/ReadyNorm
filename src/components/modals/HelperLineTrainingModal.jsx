@@ -15,6 +15,7 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { HelperTrainingRepo, TrainingDocumentRepo } from "@/lib/adapters/database";
 
 export default function HelperLineTrainingModal({ 
   open, 

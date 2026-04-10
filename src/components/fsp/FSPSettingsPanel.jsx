@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Plus, X, Bell, UserCheck, Trash2, Shield } from "lucide-react";
+import { FSPSettingsRepo } from "@/lib/adapters/database";
 
 export default function FSPSettingsPanel({ settings, organizationId, employees, onRefresh }) {
   const [formData, setFormData] = useState({
