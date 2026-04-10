@@ -400,24 +400,12 @@ DROP POLICY IF EXISTS access_requests_access     ON access_requests;
 CREATE POLICY access_requests_access ON access_requests
   FOR ALL TO authenticated
   USING (
-    user_email = auth.email()
-    OR EXISTS (
-      SELECT 1 FROM org_group_memberships m
-      WHERE m.org_group_id = access_requests.org_group_id
-        AND m.user_email   = auth.email()
-        AND m.role         = 'org_owner'
-        AND m.status       = 'active'
-    )
+    requester_email = auth.email()
+    OR auth_can_access_org(organization_id)
   )
   WITH CHECK (
-    user_email = auth.email()
-    OR EXISTS (
-      SELECT 1 FROM org_group_memberships m
-      WHERE m.org_group_id = access_requests.org_group_id
-        AND m.user_email   = auth.email()
-        AND m.role         = 'org_owner'
-        AND m.status       = 'active'
-    )
+    requester_email = auth.email()
+    OR auth_can_access_org(organization_id)
   );
 
 -- ── USER_DASHBOARD_CONFIGS ─────────────────────────────────────────────────
@@ -431,8 +419,8 @@ DROP POLICY IF EXISTS user_dashboard_configs_own_access    ON user_dashboard_con
 
 CREATE POLICY user_dashboard_configs_own_access ON user_dashboard_configs
   FOR ALL TO authenticated
-  USING (user_email = auth.email())
-  WITH CHECK (user_email = auth.email());
+  USING (user_id = auth.uid()::text)
+  WITH CHECK (user_id = auth.uid()::text);
 
 -- ── AUDIT_LOGS ─────────────────────────────────────────────────────────────
 -- audit_logs may not have organization_id. Allow authenticated users to
