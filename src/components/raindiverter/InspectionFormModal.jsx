@@ -12,6 +12,7 @@ import { uploadFile } from "@/lib/adapters/storage";
 import { DiverterInspectionRepo, RainDiverterRepo } from "@/lib/adapters/database";
 import { cn } from "@/lib/utils";
 import { differenceInDays } from "date-fns";
+import { toast } from "sonner";
 
 export default function InspectionFormModal({
   open,
@@ -124,10 +125,12 @@ export default function InspectionFormModal({
 
       // Force a small delay to ensure data is propagated before closing
       await new Promise(resolve => setTimeout(resolve, 100));
+      toast.success("Inspection submitted");
       onComplete?.();
       onOpenChange(false);
     } catch (err) {
       console.error("Failed to submit inspection:", err);
+      toast.error(`Failed to submit: ${err?.message || "Unknown error"}`);
     } finally {
       setIsSubmitting(false);
     }
