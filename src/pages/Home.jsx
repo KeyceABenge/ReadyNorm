@@ -274,14 +274,10 @@ export default function Home() {
               );
               
               if (isManager) {
-                console.log("✓ User is manager/owner - redirecting to dashboard");
+                console.log("✓ User is manager/owner - granting access");
                 setAccessStatus("approved");
                 localStorage.setItem("site_role", "manager");
                 setChosenRole("manager");
-                // Authenticated managers should never stay on Home — send them straight to the dashboard.
-                // This eliminates the back-arrow "Request Access" trap.
-                window.location.replace("/ManagerDashboard");
-                return;
               } else {
                 // Check access request — first by device_id, then fall back to email if authenticated
                 try {
