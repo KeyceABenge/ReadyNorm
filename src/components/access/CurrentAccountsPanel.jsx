@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { useState } from "react";
 import { invokeFunction } from "@/lib/adapters/functions";
+import { AccessRequestRepo } from "@/lib/adapters/database";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,9 +26,8 @@ export default function CurrentAccountsPanel({ organizationId, currentUserEmail 
   const [removingId, setRemovingId] = useState(null);
   const queryClient = useQueryClient();
 
-  // Use the listOrgUsers edge function which runs with service-role key,
-  // bypassing RLS entirely. It merges memberships + approved access requests
-  // + org group owner + org creator into a single users list.
+  // PRIMARY: listOrgUsers edge function (service-role, bypasses RLS entirely).
+  // Returns org members + approved access requests + org owner merged together.
   const { data: edgeUsers = [], isLoading } = useQuery({
     queryKey: ["org_users", organizationId, currentUserEmail ?? ""],
     queryFn: async () => {
@@ -50,24 +50,48 @@ export default function CurrentAccountsPanel({ organizationId, currentUserEmail 
     refetchOnMount: true,
   });
 
-  // Guaranteed fallback: if the edge function didn't include the current user
-  // (e.g., partial failure), inject them so the owner always sees themselves.
+  // SUPPLEMENTARY: read approved access requests from the same cache key that
+  // AccessRequestsPanel uses. This covers the case where the edge function
+  // hasn't found a user yet (e.g., their membership row was just created,
+  // or the edge function returned a partial result). Shares the same network
+  // request as AccessRequestsPanel — no extra call.
+  const { data: allAccessRequests = [] } = useQuery({
+    queryKey: ["access_requests", organizationId],
+    queryFn: () => AccessRequestRepo.filter({ organization_id: organizationId }, "-created_date"),
+    enabled: !!organizationId,
+  });
+  const approvedFromCache = allAccessRequests.filter(r => r.status === "approved");
+
+  // Merge: edge function users take priority; add any approved requests not
+  // already in the list (catches newly approved users before next edge refetch).
+  // Then inject the current user as an absolute last resort.
   const users = (() => {
-    if (!currentUserEmail) return edgeUsers;
-    const hasCurrent = edgeUsers.some(
-      (u) => u.email?.toLowerCase() === currentUserEmail.toLowerCase()
-    );
-    if (hasCurrent) return edgeUsers;
-    return [
-      ...edgeUsers,
-      {
+    const merged = new Map();
+    for (const u of edgeUsers) merged.set(u.email?.toLowerCase(), u);
+    for (const ar of approvedFromCache) {
+      const key = ar.requester_email?.toLowerCase();
+      if (key && !merged.has(key)) {
+        merged.set(key, {
+          id: ar.id,
+          full_name: ar.requester_name || ar.requester_email,
+          email: ar.requester_email,
+          role: ar.requested_role || "employee",
+          type: "approved_access",
+          approved_at: ar.reviewed_at,
+          created_date: ar.created_date,
+        });
+      }
+    }
+    if (currentUserEmail && !merged.has(currentUserEmail.toLowerCase())) {
+      merged.set(currentUserEmail.toLowerCase(), {
         id: "current-user-fallback",
         full_name: currentUserEmail.split("@")[0],
         email: currentUserEmail,
         role: "org_owner",
         type: "manager",
-      },
-    ];
+      });
+    }
+    return Array.from(merged.values());
   })();
 
   const removeAccessMutation = useMutation({
