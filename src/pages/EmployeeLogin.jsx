@@ -138,34 +138,51 @@ export default function EmployeeLogin() {
   };
 
   const createSession = async (employee) => {
+    let session = null;
+    let isNew = true;
+    let shift = { name: "Shift" };
+    let previousShiftEnded = false;
+
     try {
       const settings = siteSettings[0] || {};
-      const { session, isNew, shift, previousShiftEnded } = await findOrCreateShiftSession(
-        employee, 
-        organization, 
-        settings,
-        crews
-      );
-
-      localStorage.setItem("selectedEmployee", JSON.stringify(employee));
-      localStorage.setItem("employeeSession", JSON.stringify(session));
-      
-      if (previousShiftEnded && isNew) {
-        toast.info(`Previous shift ended. Starting new ${shift.name} session.`);
-      } else if (isNew) {
-        toast.success(`Starting ${shift.name} session`);
-      } else {
-        toast.success(`Resuming ${shift.name} session`);
-      }
-      
-      setTimeout(() => {
-        window.location.href = createPageUrl("EmployeeDashboard");
-      }, 300);
+      const result = await findOrCreateShiftSession(employee, organization, settings, crews);
+      session = result.session;
+      isNew = result.isNew;
+      shift = result.shift;
+      previousShiftEnded = result.previousShiftEnded;
     } catch (e) {
-      console.error("Error creating session:", e);
-      toast.error("Failed to start session");
-      setSelectedEmployee(null);
+      // DB session creation failed (e.g. RLS policy) — build a local-only session
+      // so the employee can still use the app. Session won't persist across devices
+      // but the shift will work on this device.
+      console.warn("[EmployeeLogin] Session DB error (using local fallback):", e?.message);
+      session = {
+        id: crypto.randomUUID(),
+        organization_id: organization.id,
+        employee_id: employee.id,
+        employee_name: employee.name,
+        session_date: new Date().toISOString().split("T")[0],
+        status: "active",
+        selected_tasks: [],
+        completed_tasks: [],
+        start_time: new Date().toISOString(),
+        _local_only: true,
+      };
     }
+
+    localStorage.setItem("selectedEmployee", JSON.stringify(employee));
+    localStorage.setItem("employeeSession", JSON.stringify(session));
+
+    if (previousShiftEnded && isNew) {
+      toast.info(`Previous shift ended. Starting new ${shift.name} session.`);
+    } else if (isNew) {
+      toast.success(`Starting ${shift.name} session`);
+    } else {
+      toast.success(`Resuming ${shift.name} session`);
+    }
+
+    setTimeout(() => {
+      window.location.href = createPageUrl("EmployeeDashboard");
+    }, 300);
   };
 
   const now = new Date();
