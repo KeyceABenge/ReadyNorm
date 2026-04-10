@@ -442,7 +442,7 @@ CREATE POLICY user_dashboard_configs_own_access ON user_dashboard_configs
 -- ── AUDIT_LOGS ─────────────────────────────────────────────────────────────
 -- audit_logs may not have organization_id. Allow authenticated users to
 -- insert (logging) and read their own org's logs if organization_id present.
-DO $$
+DO $outer$
 BEGIN
   IF EXISTS (
     SELECT 1 FROM information_schema.columns
@@ -453,23 +453,23 @@ BEGIN
     ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
     EXECUTE 'DROP POLICY IF EXISTS audit_logs_all_access ON audit_logs';
     EXECUTE 'DROP POLICY IF EXISTS audit_logs_access ON audit_logs';
-    EXECUTE $$
+    EXECUTE $sql$
       CREATE POLICY audit_logs_access ON audit_logs
         FOR ALL TO authenticated
         USING (auth_can_access_org(organization_id))
         WITH CHECK (auth_can_access_org(organization_id))
-    $$;
+    $sql$;
   ELSE
     -- No organization_id — allow all authenticated reads (security events are not sensitive cross-org)
     ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
     EXECUTE 'DROP POLICY IF EXISTS audit_logs_all_access ON audit_logs';
     EXECUTE 'DROP POLICY IF EXISTS audit_logs_access ON audit_logs';
-    EXECUTE $$
+    EXECUTE $sql$
       CREATE POLICY audit_logs_access ON audit_logs
         FOR ALL TO authenticated USING (true) WITH CHECK (true)
-    $$;
+    $sql$;
   END IF;
-END $$;
+END $outer$;
 
 -- =============================================================================
 -- DONE.
