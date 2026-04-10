@@ -72,7 +72,11 @@ export default function LiveShiftProgress({
     // Match sessions for selected date — try shift-specific first, then broaden
     const dateSessions = sessions.filter(s => {
       if (s.session_date !== selectedDate) return false;
-      return s.status === "active" || s.status === "ended" || s.status === "auto_ended" || s.task_selection_completed;
+      // Include any session that was meaningfully started — don't filter by status alone
+      // because status values vary (active, ended, auto_ended, in_progress, etc.)
+      if (s.task_selection_completed) return true;
+      if (s.status && s.status !== "pending" && s.status !== "cancelled") return true;
+      return false;
     });
     
     // Try matching by shift_id or shift_name

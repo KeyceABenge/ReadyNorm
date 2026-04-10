@@ -222,7 +222,9 @@ export default function ManagerDashboard() {
     queryKey: ["tasks", orgId],
     queryFn: () => TaskRepo.filter({ organization_id: orgId }, "-created_date"),
     enabled: !!orgId,
-    ...queryConfig
+    ...queryConfig,
+    refetchInterval: 60 * 1000,
+    refetchIntervalInBackground: false,
   });
 
   const { data: employees = [], isLoading: employeesLoading } = useQuery({
@@ -257,7 +259,7 @@ export default function ManagerDashboard() {
   const { data: areas = [] } = useQuery({ queryKey: ["areas", orgId], queryFn: () => AreaRepo.filter({ organization_id: orgId }), ...tier2Config });
   const { data: assets = [] } = useQuery({ queryKey: ["assets", orgId], queryFn: () => AssetRepo.filter({ organization_id: orgId }), ...tier2Config });
   const { data: assetGroups = [] } = useQuery({ queryKey: ["asset_groups", orgId], queryFn: () => AssetGroupRepo.filter({ organization_id: orgId }), ...tier2Config });
-  const { data: employeeSessions = [] } = useQuery({ queryKey: ["employee_sessions", orgId], queryFn: () => EmployeeSessionRepo.filter({ organization_id: orgId }, "-session_date", 200), ...tier2Config });
+  const { data: employeeSessions = [] } = useQuery({ queryKey: ["employee_sessions", orgId], queryFn: () => EmployeeSessionRepo.filter({ organization_id: orgId }, "-session_date", 200), ...tier2Config, staleTime: 0, refetchInterval: 30 * 1000, refetchIntervalInBackground: false });
   const { data: announcements = [] } = useQuery({ queryKey: ["announcements", orgId], queryFn: () => AnnouncementRepo.filter({ organization_id: orgId }, "-created_date"), ...tier2Config });
   const { data: sanitaryReports = [] } = useQuery({ queryKey: ["sanitary_reports", orgId], queryFn: () => SanitaryReportRepo.filter({ organization_id: orgId }, "-created_date"), ...tier2Config });
 
