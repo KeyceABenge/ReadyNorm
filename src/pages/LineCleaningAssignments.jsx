@@ -996,23 +996,6 @@ export default function LineCleaningAssignments() {
         </div>
       )}
 
-      {/* Debug Info */}
-      {import.meta.env.DEV && (
-        <Card className="p-4 bg-yellow-50 border-yellow-200">
-          <div className="flex items-start gap-2">
-            <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-            <div className="text-xs text-yellow-800 space-y-1">
-              <div className="font-semibold">Debug Info (Dev Mode Only)</div>
-              <div>Date: {selectedDate}</div>
-              <div>Shift: {selectedShift}</div>
-              <div>Assignments Count: {existingAssignments.length}</div>
-              <div>Assignment IDs: {existingAssignments.map(a => a.id).join(", ") || "none"}</div>
-              <div>Line IDs: {existingAssignments.map(a => a.production_line_id).join(", ") || "none"}</div>
-            </div>
-          </div>
-        </Card>
-      )}
-
       {/* Save Progress Dialog */}
       <AlertDialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
         <AlertDialogContent>
