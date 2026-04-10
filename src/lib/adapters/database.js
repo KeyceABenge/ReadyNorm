@@ -212,6 +212,69 @@ function parseSort(sort) {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 function isValidUuid(val) { return typeof val === 'string' && UUID_RE.test(val); }
 
+// DEV-only guard: warn when a query on a known multi-tenant table is made
+// without an organization_id filter. This surfaces accidental cross-org leaks
+// during development. Silenced in production.
+const ORG_SCOPED_TABLES = new Set([
+  'employees','tasks','employee_sessions','site_settings','crews','crew_schedules',
+  'role_configs','task_groups','task_comments','announcements','employee_trainings',
+  'training_documents','training_quizzes','controlled_documents',
+  'drain_cleaning_records','diverter_inspections','titration_records',
+  'employee_feedback','line_cleaning_assignments','area_sign_offs',
+  'pre_op_inspections','post_clean_inspections','drain_locations',
+  'drain_cleaning_settings','titration_areas','titration_settings',
+  'rain_diverters','diverter_task_settings','chemical_inventory_records',
+  'chemical_inventory_settings','production_lines','areas','assets','asset_groups',
+  'facility_maps','drain_facility_maps','chemicals','chemical_count_entries',
+  'employee_peer_feedback','anonymous_feedback','sanitary_reports',
+  'employee_shifts','shift_requests','badges','performance_goals',
+  'sds_documents','ssops','competency_records','competency_evaluations',
+  'task_training_gaps','sanitation_downtimes','capas',
+  'pest_findings','pest_devices','pest_service_reports','pest_thresholds',
+  'pest_escalation_markers','emp_samples','emp_sites','emp_thresholds',
+  'plant_exceptions','allergens','allergen_assignments','employee_qa_logs',
+  'evaluation_templates','evaluator_settings','training_records',
+  'shift_handoffs','incidents','calibration_equipment','calibration_records',
+  'ccp_monitoring_points','ccp_records','capa_actions','capa_settings',
+  'audit_findings','audit_plans','audit_requirements','audit_results',
+  'audit_sections','audit_standards','chemical_location_assignments',
+  'chemical_storage_locations','complaint_settings','customer_complaints',
+  'fsp_settings','food_safety_plans','foreign_material_incidents',
+  'glass_breakage_incidents','glass_brittle_items','hazard_analyses',
+  'helpers','hold_releases','issue_settings','issues','preventive_controls',
+  'process_steps','receiving_inspections','risk_entries','soc2_controls',
+  'soc2_evidence','soc2_policies','soc2_risks','soc2_vendors',
+  'scheduled_audits','visitor_logs','supplier_records','supplier_contacts',
+  'supplier_materials','supplier_nonconformances','supplier_settings',
+  'employee_groups','employee_badges','employee_quotas','scheduling_requests',
+  'pest_control_records','chemical_products','chemical_locations',
+  'diverter_settings','label_verifications','capa_comments',
+  'document_change_requests','document_control_settings','document_versions',
+  'document_acknowledgments','handoff_settings','pest_locations','pest_vendors',
+  'recall_events','management_reviews','risk_settings','training_matrices',
+  'training_competency_settings','soc2_evidence_packages','compliance_frameworks',
+  'compliance_requirements','compliance_evidence','water_tests',
+]);
+
+function warnMissingOrgFilter(tableName, filters) {
+  if (import.meta.env.PROD) return;
+  if (!ORG_SCOPED_TABLES.has(tableName)) return;
+  if (!filters || !Object.keys(filters).length) {
+    console.warn(
+      `[DB SECURITY] ${tableName}.filter() called WITHOUT organization_id — ` +
+      `this query returns data from ALL orgs. Always pass { organization_id: currentOrg.id }.`
+    );
+    return;
+  }
+  const hasOrgFilter = Object.keys(filters).some(k => k === 'organization_id');
+  if (!hasOrgFilter) {
+    console.warn(
+      `[DB SECURITY] ${tableName}.filter() missing organization_id filter. ` +
+      `Filters used: ${Object.keys(filters).join(', ')}`
+    );
+  }
+}
+
 // Apply Base44-style filter object to a Supabase query
 function applyFilters(query, filters) {
   if (!filters) return query;
@@ -287,6 +350,7 @@ function sanitizePayload(data) {
 function createSupabaseRepository(tableName) {
   return {
     list: async (sort, limit) => {
+      warnMissingOrgFilter(tableName, null);
       let q = supabase.from(tableName).select("*");
       const s = parseSort(sort);
       if (s) q = q.order(s.column, { ascending: s.ascending });
@@ -301,6 +365,7 @@ function createSupabaseRepository(tableName) {
     },
 
     filter: async (query, sort, limit) => {
+      warnMissingOrgFilter(tableName, query);
       let q = supabase.from(tableName).select("*");
       q = applyFilters(q, query);
       const s = parseSort(sort);
