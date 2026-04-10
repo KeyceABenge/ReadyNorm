@@ -4,7 +4,7 @@
  * Supports CSV export for SOC2 evidence collection.
  */
 import { useQuery } from "@tanstack/react-query";
-
+import { invokeFunction } from "@/lib/adapters/functions";
 import { AuditLogRepo } from "@/lib/adapters/database";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +21,7 @@ export default function AccessReviewReport({ organizationId }) {
   const { data: users = [], isLoading: usersLoading } = useQuery({
     queryKey: ["access_review_users", organizationId],
     queryFn: async () => {
-      const response = await supabase.functions.invoke("listOrgUsers", {
+      const response = await invokeFunction("listOrgUsers", {
         organization_id: organizationId,
       });
       return response.data?.users || [];

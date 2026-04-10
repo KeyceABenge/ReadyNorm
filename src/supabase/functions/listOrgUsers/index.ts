@@ -26,31 +26,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: profile } = await supabase
-      .from('User')
-      .select('*')
-      .eq('email', authUser.email)
-      .single();
+    const callerEmail = authUser.email!;
 
-    const user = {
-      email: authUser.email,
-      role: profile?.role || 'user',
-    };
-
-    if (user.role !== 'admin') {
-      const { data: memberships } = await supabase
-        .from('org_group_memberships')
-        .select('*')
-        .eq('user_email', user.email)
-        .eq('status', 'active');
-      const hasManagerRole = (memberships || []).some((m: any) =>
-        ['org_owner', 'org_manager', 'site_manager'].includes(m.role)
-      );
-      if (!hasManagerRole) {
-        return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
-      }
-    }
-
+    // Parse body first so we can scope the access check to the specific org
     const { organization_id } = await req.json();
 
     if (!organization_id) {
@@ -62,6 +40,25 @@ Deno.serve(async (req) => {
       .select('*')
       .eq('id', organization_id);
     const org = orgs?.[0];
+
+    // Authorization: caller must be the org creator OR an active member of the
+    // org_group that owns this org with a manager-level role.
+    const isOrgCreator = org?.created_by?.toLowerCase() === callerEmail.toLowerCase();
+    let isOrgMember = false;
+    if (!isOrgCreator && org?.org_group_id) {
+      const { data: callerMemberships } = await supabase
+        .from('org_group_memberships')
+        .select('role')
+        .eq('org_group_id', org.org_group_id)
+        .eq('user_email', callerEmail)
+        .eq('status', 'active');
+      isOrgMember = (callerMemberships || []).some((m: any) =>
+        ['org_owner', 'org_manager', 'site_manager'].includes(m.role)
+      );
+    }
+    if (!isOrgCreator && !isOrgMember) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
     const siteCode = org?.site_code;
 
     const usersMap = new Map();
@@ -74,7 +71,9 @@ Deno.serve(async (req) => {
         .eq('status', 'active');
 
       const relevantMemberships = (memberships || []).filter((m: any) => {
-        if (m.site_access_type === "all") return true;
+        // Treat null/undefined site_access_type as "all" (legacy memberships
+        // created before the field existed should default to full access)
+        if (!m.site_access_type || m.site_access_type === "all") return true;
         if (m.site_access_type === "selected" && m.allowed_site_ids?.includes(organization_id)) return true;
         return false;
       });

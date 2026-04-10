@@ -55,8 +55,8 @@ export default function Home() {
     queryKey: ["org_group_for_site", organization?.id],
     queryFn: async () => {
       if (!organization?.org_group_id) return null;
-      const groups = await OrganizationGroupRepo.filter({ status: "active" });
-      return groups.find(g => g.id === organization.org_group_id) || null;
+      const groups = await OrganizationGroupRepo.filter({ id: organization.org_group_id, status: "active" });
+      return groups[0] || null;
     },
     enabled: !!organization?.org_group_id,
     staleTime: 5 * 60 * 1000
