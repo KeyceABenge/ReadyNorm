@@ -16,10 +16,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, GripVertical, Calendar, Clock, Loader2, AlertCircle, Save, Users, GitBranch } from "lucide-react";
+import { Plus, Trash2, GripVertical, Calendar, Clock, Loader2, AlertCircle, Save, Users, GitBranch, ChevronDown } from "lucide-react";
 import ReadyNormLoader from "@/components/loading/ReadyNormLoader";
 import { cn } from "@/lib/utils";
-import { format, addMinutes, parseISO, differenceInMinutes } from "date-fns";
+import { format, addMinutes, parseISO, differenceInMinutes, parse } from "date-fns";
+import { Calendar as CalendarPicker } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { createPageUrl } from "@/utils";
@@ -599,12 +601,27 @@ export default function LineCleaningAssignments() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label>Scheduled Date</Label>
-            <Input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="mt-1"
-            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="mt-1 w-full flex items-center justify-between gap-2 h-10 px-3 rounded-md border border-input bg-background text-sm hover:bg-accent hover:text-accent-foreground transition-colors">
+                  <span className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-slate-400" />
+                    <span className="font-medium text-slate-800">
+                      {selectedDate ? format(parse(selectedDate, 'yyyy-MM-dd', new Date()), 'EEEE, MMM d, yyyy') : 'Pick a date'}
+                    </span>
+                  </span>
+                  <ChevronDown className="w-4 h-4 text-slate-400" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarPicker
+                  mode="single"
+                  selected={selectedDate ? parse(selectedDate, 'yyyy-MM-dd', new Date()) : undefined}
+                  onSelect={(d) => d && setSelectedDate(format(d, 'yyyy-MM-dd'))}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
           </div>
           <div>
             <Label>Shift</Label>
@@ -741,12 +758,26 @@ export default function LineCleaningAssignments() {
                                     <div className="w-2 h-2 rounded-full bg-red-400" />
                                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Line Goes Down</span>
                                   </div>
-                                  <input
-                                    type="date"
-                                    value={assignment.line_down_date || selectedDate}
-                                    onChange={(e) => handleLineDownDateChange(index, e.target.value)}
-                                    className="w-full h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent"
-                                  />
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <button className="w-full flex items-center justify-between gap-1.5 h-9 px-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 hover:bg-slate-50 transition-colors">
+                                        <span className="font-medium">
+                                          {assignment.line_down_date || selectedDate
+                                            ? format(parse(assignment.line_down_date || selectedDate, 'yyyy-MM-dd', new Date()), 'MMM d, yyyy')
+                                            : 'Pick date'}
+                                        </span>
+                                        <ChevronDown className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                                      </button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                      <CalendarPicker
+                                        mode="single"
+                                        selected={parse(assignment.line_down_date || selectedDate, 'yyyy-MM-dd', new Date())}
+                                        onSelect={(d) => d && handleLineDownDateChange(index, format(d, 'yyyy-MM-dd'))}
+                                        initialFocus
+                                      />
+                                    </PopoverContent>
+                                  </Popover>
                                   <input
                                     type="time"
                                     value={assignment.line_down_time || ""}
