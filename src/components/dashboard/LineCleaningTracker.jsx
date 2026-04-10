@@ -11,7 +11,9 @@ export default function LineCleaningTracker({
   productionLines, 
   areas,
   assets,
-  employees = []
+  employees = [],
+  postCleanInspections = [],
+  preOpInspections = [],
 }) {
   const today = format(new Date(), "yyyy-MM-dd");
 
@@ -60,6 +62,8 @@ export default function LineCleaningTracker({
               employees={employees}
               live={true}
               title="Cleaning"
+              postCleanInspections={postCleanInspections}
+              preOpInspections={preOpInspections}
               headerRight={
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                   {counts.completed}/{counts.total}

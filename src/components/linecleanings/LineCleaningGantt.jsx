@@ -96,6 +96,8 @@ export default function LineCleaningGantt({
   selectedDate,
   selectedShift,
   orgName,
+  postCleanInspections = [],
+  preOpInspections = [],
 }) {
   const [tick, setTick] = useState(0);
   const [lastUpdated, setLastUpdated] = useState(new Date());
@@ -266,7 +268,42 @@ export default function LineCleaningGantt({
       if (!earliest || start < earliest) earliest = start;
       if (!latest || end > latest) latest = end;
 
-      const { blocks: areaBlocks, maxStack: maxConcurrentStack } = computeAreaBlocks(a, liveAssets, liveAssetGroups);
+  const { blocks: areaBlocks, maxStack: maxConcurrentStack } = computeAreaBlocks(a, liveAssets, liveAssetGroups);
+
+      // --- Area-level status flags ---
+      // Cleaned: all assets in the area have a passed_inspection sign-off for this assignment
+      const aSignOffsForAssignment = signOffsByAssignment[a.id] || [];
+      const cleanedAreaIds = new Set();
+      (a.areas_snapshot || []).forEach(area => {
+        const areaAssets = (a.assets_snapshot || []).filter(asset => asset.area_id === area.id);
+        if (areaAssets.length === 0) return;
+        const passed = aSignOffsForAssignment.filter(so => so.area_id === area.id && so.status === "passed_inspection");
+        // Deduplicate by asset_id
+        const passedAssetIds = new Set(passed.map(so => so.asset_id));
+        if (passedAssetIds.size >= areaAssets.length) cleanedAreaIds.add(area.id);
+      });
+
+      // Post-clean passed: PostCleanInspection record with failed_assets === 0 for this assignment + area
+      const postCleanPassedAreaIds = new Set(
+        postCleanInspections
+          .filter(p => p.line_cleaning_assignment_id === a.id && p.failed_assets === 0 && p.total_assets > 0)
+          .map(p => p.area_id)
+      );
+
+      // Pre-op passed: PreOpInspection with status "passed" for this line today
+      const today = format(new Date(), "yyyy-MM-dd");
+      const preOpPassed = preOpInspections.some(
+        p => p.production_line_id === a.production_line_id &&
+             p.status === "passed" &&
+             p.inspection_date?.startsWith(today)
+      );
+
+      const enrichedAreaBlocks = areaBlocks.map(block => ({
+        ...block,
+        isCleaned: cleanedAreaIds.has(block.id),
+        isPostCleanPassed: postCleanPassedAreaIds.has(block.id),
+        isPreOpPassed: preOpPassed,
+      }));
 
       const aSignOffs = signOffsByAssignment[a.id] || [];
       const totalAssets = a.assets_snapshot?.length || 0;
@@ -325,7 +362,7 @@ export default function LineCleaningGantt({
         areasCount: a.areas_snapshot?.length || 0,
         assetsCount: totalAssets,
         completedAssets,
-        areaBlocks, maxConcurrentStack,
+        areaBlocks: enrichedAreaBlocks, maxConcurrentStack,
         lineSegments: sim?.segments || null,
         prediction, workers,
         wasChained: start > origStart,
@@ -623,7 +660,8 @@ export default function LineCleaningGantt({
 
                                 return (
                                   <div key={block.id} className={cn("absolute border rounded-sm overflow-hidden", color.bg)} style={{ left: `${block.offsetPct}%`, width: `${Math.max(block.widthPct, 1)}%`, top: topCalc, height: heightCalc }} title={`${block.name}: ${Math.round(block.effectiveHours * 60)}m`}>
-                                    <div className="relative w-full h-full flex">
+                                    <div className="relative w-full h-full flex flex-col">
+                                      <div className="flex-1 flex">
                                       {segments.length > 1 ? segments.map((seg, si) => {
                                         const segDuration = (seg.endHour || block.endHour) - seg.startHour;
                                         const segWidthPct = blockDuration > 0 ? (segDuration / blockDuration) * 100 : 100;
@@ -644,6 +682,22 @@ export default function LineCleaningGantt({
                                           </div>
                                         </div>
                                       )}
+                                      </div>
+                                      {/* Status indicator strip — 3 dots: cleaned / post-clean / pre-op */}
+                                      <div className="flex gap-px px-1 pb-0.5 mt-auto">
+                                        <div
+                                          className={cn("h-1.5 flex-1 rounded-sm transition-colors", block.isCleaned ? "bg-emerald-500" : "bg-slate-200")}
+                                          title={block.isCleaned ? "✓ Cleaned & signed off" : "Not yet cleaned"}
+                                        />
+                                        <div
+                                          className={cn("h-1.5 flex-1 rounded-sm transition-colors", block.isPostCleanPassed ? "bg-cyan-500" : "bg-slate-200")}
+                                          title={block.isPostCleanPassed ? "✓ Post-clean inspection passed" : "Post-clean inspection pending"}
+                                        />
+                                        <div
+                                          className={cn("h-1.5 flex-1 rounded-sm transition-colors", block.isPreOpPassed ? "bg-violet-500" : "bg-slate-200")}
+                                          title={block.isPreOpPassed ? "✓ Pre-op inspection passed" : "Pre-op inspection pending"}
+                                        />
+                                      </div>
                                     </div>
                                   </div>
                                 );
@@ -686,7 +740,7 @@ export default function LineCleaningGantt({
       </div>
 
       {/* Legend — compact */}
-      <div className="px-3 py-1.5 border-t border-slate-100 bg-slate-50 flex gap-3 flex-wrap">
+        <div className="px-3 py-1.5 border-t border-slate-100 bg-slate-50 flex gap-3 flex-wrap">
         {Object.entries(STATUS_COLORS).map(([status, color]) => (
           <div key={status} className="flex items-center gap-1">
             <div className={cn("w-2 h-2 rounded-full", color)} />
@@ -709,6 +763,13 @@ export default function LineCleaningGantt({
             </div>
           </>
         )}
+        {/* Area stage legend */}
+        <div className="flex items-center gap-0.5 border-l border-slate-200 pl-3 ml-1">
+          <div className="w-3 h-1.5 rounded-sm bg-emerald-500" />
+          <div className="w-3 h-1.5 rounded-sm bg-cyan-500 mx-0.5" />
+          <div className="w-3 h-1.5 rounded-sm bg-violet-500" />
+          <span className="text-[10px] text-slate-500 ml-1">Area: Cleaned · Post-clean · Pre-op</span>
+        </div>
       </div>
     </div>
   );
