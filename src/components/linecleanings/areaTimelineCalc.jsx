@@ -6,11 +6,11 @@
  * - `employeeCounts` gives the INITIAL distribution for areas that start together.
  * - When an area finishes, its workers are immediately freed and redistributed
  *   to still-running areas, proportionally reducing their remaining duration.
- * - Sequential areas: unlocked hours scale linearly with workers; locked hours
- *   are a hard floor that cannot be reduced (they don't speed up with more crew).
+ * - Sequential areas: locked and unlocked work are done in series by the same crew.
+ *   time = lockedHours + divisibleHours / workers
+ *   (1 person on 3h locked + 2.5h unlocked = 5.5h; 4 people = 3h + 0.625h = 3.625h)
+ * - Concurrent areas: different workers handle locked vs unlocked in parallel.
  *   time = max(lockedHours, divisibleHours / workers)
- * - Concurrent areas: locked assets get 1 worker (can't be parallelized);
- *   remaining workers split across unlocked areas proportionally.
  *
  * Returns { areaTimeline, totalHours }
  *   areaTimeline: array of { id, name, seq, effectiveHours, employeeCount, startHour, endHour, segments }
@@ -59,7 +59,11 @@ export function computeAreaTimeline(areasSnapshot, assetsSnapshot, employeeCount
 
   function timeToFinish(a) {
     const divTime = a.workers > 0 ? a.remainingDivisible / a.workers : Infinity;
-    return Math.max(a.remainingLocked, divTime);
+    // Sequential: locked + divisible phases run in series → sum
+    // Concurrent: different workers handle each in parallel → max
+    return a.isSequential
+      ? a.remainingLocked + divTime
+      : Math.max(a.remainingLocked, divTime);
   }
 
   function closeSegment(a) {
@@ -76,6 +80,7 @@ export function computeAreaTimeline(areasSnapshot, assetsSnapshot, employeeCount
   function canBenefit(a) {
     if (a.isFullyLocked) return false;
     if (a.remainingDivisible <= 0.001) return false;
+    if (a.isSequential) return true; // more workers always speeds up the divisible phase
     const divTime = a.remainingDivisible / a.workers;
     return divTime > a.remainingLocked + 0.001;
   }
@@ -85,11 +90,11 @@ export function computeAreaTimeline(areasSnapshot, assetsSnapshot, employeeCount
 
     if (group.length === 1) {
       const a = group[0];
-      // Sequential area: assign full crew so divisible hours scale linearly.
-      // Locked hours remain a hard floor — they don't speed up with more workers.
-      // time = max(lockedHours, divisibleHours / workers)
+      // Sequential area: locked and divisible work done in series by the full crew.
+      // time = lockedHours + divisibleHours / workers
       active.push({
         ...a, startHour: time, workers: workersToUse,
+        isSequential: true,
         remainingDivisible: a.divisibleHours,
         remainingLocked: a.lockedHours,
         segments: [{ startHour: time, endHour: null, workers: workersToUse }],
@@ -154,8 +159,25 @@ export function computeAreaTimeline(areasSnapshot, assetsSnapshot, employeeCount
 
     currentTime += minDt;
     active.forEach(a => {
-      a.remainingDivisible = Math.max(0, a.remainingDivisible - a.workers * minDt);
-      a.remainingLocked = Math.max(0, a.remainingLocked - minDt);
+      if (a.isSequential) {
+        // Phase 1: crew works through divisible hours; Phase 2: locked hours run solo
+        if (a.remainingDivisible > 0.001) {
+          const deplete = a.workers * minDt;
+          if (deplete >= a.remainingDivisible) {
+            // Divisible phase completes this tick; remaining tick time goes to locked phase
+            const lockedTime = (deplete - a.remainingDivisible) / a.workers;
+            a.remainingDivisible = 0;
+            a.remainingLocked = Math.max(0, a.remainingLocked - lockedTime);
+          } else {
+            a.remainingDivisible -= deplete;
+          }
+        } else {
+          a.remainingLocked = Math.max(0, a.remainingLocked - minDt);
+        }
+      } else {
+        a.remainingDivisible = Math.max(0, a.remainingDivisible - a.workers * minDt);
+        a.remainingLocked = Math.max(0, a.remainingLocked - minDt);
+      }
     });
 
     const justFinished = [];
