@@ -7,52 +7,37 @@
  */
 import { supabase } from "@/api/supabaseClient";
 
-// Supabase project constants (same as supabaseClient.js)
-const SUPABASE_URL = "https://zamrusolomzustgenpin.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_p-ZZcpZzIqRW1dRNoHT69Q_l8l2XH3Q";
-
-/**
- * Get the Supabase Edge Function URL for a given function name.
- * Supabase Edge Functions are at: {SUPABASE_URL}/functions/v1/{name}
- */
-function getFunctionUrl(functionName) {
-  return `${SUPABASE_URL}/functions/v1/${functionName}`;
-}
-
-/**
- * Get the current Supabase access token.
- */
-async function getAccessToken() {
-  const { data: { session } } = await supabase.auth.getSession();
-  return session?.access_token || null;
-}
-
 /**
  * Invoke a backend function by name with a payload.
- * Uses direct fetch() with Supabase JWT + apikey headers.
+ * Uses supabase.functions.invoke() which automatically attaches the user's JWT,
+ * handles the sb_publishable_ key format, and refreshes tokens as needed.
  * 
  * @param {string} functionName - Name of the function (e.g. "listOrgUsers")
  * @param {object} [payload={}] - Request body
  * @returns {Promise<{data: any, status: number}>} Axios-compatible response shape
  */
 export async function invokeFunction(functionName, payload = {}) {
-  const token = await getAccessToken();
-  const url = getFunctionUrl(functionName);
+  try {
+    const { data, error } = await supabase.functions.invoke(functionName, {
+      body: payload,
+    });
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': SUPABASE_ANON_KEY,
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-    },
-    body: JSON.stringify(payload),
-  });
+    if (error) {
+      // FunctionsHttpError exposes the raw Response as error.context
+      const status = error?.context?.status ?? 500;
+      let errorBody = { error: error.message };
+      try {
+        const parsed = await error.context?.json?.();
+        if (parsed) errorBody = parsed;
+      } catch (_) { /* non-JSON body */ }
+      return { data: errorBody, status };
+    }
 
-  const data = await response.json();
-
-  // Return Axios-compatible response shape for backward compatibility
-  return { data, status: response.status };
+    return { data, status: 200 };
+  } catch (e) {
+    console.error(`[invokeFunction] ${functionName} threw:`, e);
+    return { data: { error: String(e?.message ?? e) }, status: 500 };
+  }
 }
 
 // Convenience wrappers for known backend functions
