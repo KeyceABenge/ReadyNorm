@@ -10,7 +10,7 @@
 CREATE TABLE IF NOT EXISTS capa_comments (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
-  capa_id         UUID REFERENCES capas(id) ON DELETE CASCADE,
+  capa_id         TEXT, -- TEXT to match capas.id type (no FK to avoid type mismatch)
   comment_type    TEXT DEFAULT 'comment', -- comment, system, status_change, action_update
   content         TEXT NOT NULL,
   author_email    TEXT,
