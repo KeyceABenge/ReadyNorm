@@ -42,7 +42,9 @@ Deno.serve(async (req) => {
     const org = orgs?.[0];
 
     // Authorization: caller must be the org creator OR an active member of the
-    // org_group that owns this org with a manager-level role.
+    // org_group that owns this org with a manager-level role OR the owner of
+    // any organization_group (handles legacy orgs where created_by/org_group_id
+    // were never backfilled).
     const isOrgCreator = org?.created_by?.toLowerCase() === callerEmail.toLowerCase();
     let isOrgMember = false;
     if (!isOrgCreator && org?.org_group_id) {
@@ -56,7 +58,18 @@ Deno.serve(async (req) => {
         ['org_owner', 'org_manager', 'site_manager'].includes(m.role)
       );
     }
+    // Fallback: caller is owner_email of any organization_group they created.
+    // This covers legacy orgs where organizations.created_by and org_group_id
+    // were never set. The response is still scoped to organization_id.
+    let isOrgGroupOwner = false;
     if (!isOrgCreator && !isOrgMember) {
+      const { data: ownedGroups } = await supabase
+        .from('organization_groups')
+        .select('id')
+        .eq('owner_email', callerEmail);
+      isOrgGroupOwner = (ownedGroups || []).length > 0;
+    }
+    if (!isOrgCreator && !isOrgMember && !isOrgGroupOwner) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
     const siteCode = org?.site_code;
@@ -198,6 +211,23 @@ Deno.serve(async (req) => {
           created_date: ar.created_date,
         });
       }
+    }
+
+    // Always guarantee the authenticated caller appears in the list.
+    // They passed the auth check above, so they are an admin/owner.
+    const callerEmailLower = callerEmail.toLowerCase();
+    const callerAlreadyIn = [...usersMap.values()].some(
+      (u: any) => u.email?.toLowerCase() === callerEmailLower
+    );
+    if (!callerAlreadyIn) {
+      usersMap.set(callerEmailLower, {
+        id: `caller-fallback-${org.id}`,
+        full_name: callerEmail.split('@')[0],
+        email: callerEmail,
+        role: 'org_owner',
+        type: 'manager',
+        created_date: org.created_date,
+      });
     }
 
     const users = Array.from(usersMap.values());

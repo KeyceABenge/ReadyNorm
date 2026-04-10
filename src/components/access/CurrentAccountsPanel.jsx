@@ -1,7 +1,6 @@
 // @ts-nocheck
 import { useState } from "react";
 import { invokeFunction } from "@/lib/adapters/functions";
-import { OrganizationRepo, OrganizationGroupRepo, OrgGroupMembershipRepo } from "@/lib/adapters/database";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,119 +25,40 @@ export default function CurrentAccountsPanel({ organizationId, currentUserEmail 
   const [removingId, setRemovingId] = useState(null);
   const queryClient = useQueryClient();
 
-  // Read access requests from the same React Query cache key that
-  // AccessRequestsPanel populates — no extra network call, no RLS dependency.
-  // AccessRequestsPanel is always rendered on the same page and loads first.
-  const { data: allAccessRequests = [] } = useQuery({
-    queryKey: ["access_requests", organizationId],
-    queryFn: () => import("@/lib/adapters/database").then(({ AccessRequestRepo }) =>
-      AccessRequestRepo.filter({ organization_id: organizationId }, "-created_date")
-    ),
-    enabled: !!organizationId,
-  });
-  const approvedRequests = allAccessRequests.filter(r => r.status === "approved");
-
-  const { data: dbUsers = [], isLoading } = useQuery({
+  // Use the listOrgUsers edge function which runs with service-role key,
+  // bypassing RLS entirely. It merges memberships + approved access requests
+  // + org group owner + org creator into a single users list.
+  const { data: edgeUsers = [], isLoading } = useQuery({
     queryKey: ["org_users", organizationId, currentUserEmail ?? ""],
     queryFn: async () => {
-      // Fetch the org to get its org_group_id
-      const orgs = await OrganizationRepo.filter({ id: organizationId });
-      const org = orgs[0];
-      if (!org) return [];
-
-      const usersMap = new Map();
-
-      // Fetch active org group members (migration 010 grants owners SELECT
-      // access without needing a pre-existing membership row)
-      if (org.org_group_id) {
-        const memberships = await OrgGroupMembershipRepo.filter({
-          org_group_id: org.org_group_id,
-          status: "active",
-        });
-        for (const m of memberships) {
-          // Respect site_access_type — null/undefined means 'all'
-          const hasAccess =
-            !m.site_access_type ||
-            m.site_access_type === "all" ||
-            (m.site_access_type === "selected" &&
-              (m.allowed_site_ids || []).includes(organizationId));
-          if (!hasAccess) continue;
-          if (!usersMap.has(m.user_email)) {
-            usersMap.set(m.user_email, {
-              id: m.id,
-              full_name: m.user_name || m.user_email,
-              email: m.user_email,
-              role: m.role || "manager",
-              type: "manager",
-              created_date: m.created_date,
-            });
-          }
-        }
-      }
-
-      // Guaranteed fallback: fetch the org group owner directly from
-      // organization_groups (SELECT policy is USING(true) — always readable).
-      // This ensures the owner always appears even when org_group_memberships
-      // is empty due to RLS (fixed by migration 010, but works before it too).
-      if (org.org_group_id) {
-        const groups = await OrganizationGroupRepo.filter({ id: org.org_group_id });
-        const grp = groups[0];
-        if (grp?.owner_email) {
-          const ownerKey = grp.owner_email.toLowerCase();
-          const alreadyIn = [...usersMap.values()].some(
-            u => u.email?.toLowerCase() === ownerKey
-          );
-          if (!alreadyIn) {
-            usersMap.set(ownerKey, {
-              id: `grp-owner-${grp.id}`,
-              full_name: grp.owner_name || grp.owner_email.split('@')[0],
-              email: grp.owner_email,
-              role: 'org_owner',
-              type: 'manager',
-              created_date: grp.created_date,
-            });
-          }
-        }
-      }
-
-      return Array.from(usersMap.values());
+      const { data, status } = await invokeFunction("listOrgUsers", {
+        organization_id: organizationId,
+      });
+      if (status !== 200 || !data?.users) return [];
+      return data.users;
     },
-    enabled: !!organizationId,
+    enabled: !!organizationId && !!currentUserEmail,
+    staleTime: 30_000,
   });
 
-  // Merge approved access requests into the user list at render time.
-  // This is done outside the queryFn so it always reflects the latest
-  // approvedRequests from the shared cache, regardless of query timing.
+  // Guaranteed fallback: if the edge function didn't include the current user
+  // (e.g., partial failure), inject them so the owner always sees themselves.
   const users = (() => {
-    const merged = new Map();
-    // Seed with dbUsers (memberships + org group owner)
-    for (const u of dbUsers) merged.set(u.email?.toLowerCase(), u);
-    // Layer in approved access requests from the shared cache
-    for (const ar of approvedRequests) {
-      const key = ar.requester_email?.toLowerCase();
-      if (key && !merged.has(key)) {
-        merged.set(key, {
-          id: ar.id,
-          full_name: ar.requester_name || ar.requester_email,
-          email: ar.requester_email,
-          role: ar.requested_role || "employee",
-          type: "approved_access",
-          approved_at: ar.reviewed_at,
-          created_date: ar.created_date,
-        });
-      }
-    }
-    // Absolute fallback: ensure the current logged-in user is always present
-    if (currentUserEmail && !merged.has(currentUserEmail.toLowerCase())) {
-      merged.set(currentUserEmail.toLowerCase(), {
+    if (!currentUserEmail) return edgeUsers;
+    const hasCurrent = edgeUsers.some(
+      (u) => u.email?.toLowerCase() === currentUserEmail.toLowerCase()
+    );
+    if (hasCurrent) return edgeUsers;
+    return [
+      ...edgeUsers,
+      {
         id: "current-user-fallback",
         full_name: currentUserEmail.split("@")[0],
         email: currentUserEmail,
         role: "org_owner",
         type: "manager",
-      });
-    }
-    return Array.from(merged.values());
+      },
+    ];
   })();
 
   const removeAccessMutation = useMutation({
