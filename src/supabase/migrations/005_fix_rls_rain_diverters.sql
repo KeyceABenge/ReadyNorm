@@ -1,9 +1,16 @@
 -- =============================================================================
--- Fix RLS policies for rain diverter tables (and related tables that were
--- missing from the 002_missing_tables migration).
+-- Fix RLS policies + missing UUID defaults for rain diverter tables.
 -- Run this in the Supabase SQL Editor.
 -- =============================================================================
 
+-- Fix missing UUID defaults on id columns
+ALTER TABLE rain_diverters         ALTER COLUMN id SET DEFAULT gen_random_uuid();
+ALTER TABLE diverter_inspections   ALTER COLUMN id SET DEFAULT gen_random_uuid();
+ALTER TABLE diverter_task_settings ALTER COLUMN id SET DEFAULT gen_random_uuid();
+ALTER TABLE facility_maps          ALTER COLUMN id SET DEFAULT gen_random_uuid();
+ALTER TABLE drain_facility_maps    ALTER COLUMN id SET DEFAULT gen_random_uuid();
+
+-- Fix RLS: enable + add permissive policy
 DO $$
 DECLARE
   tbl TEXT;
