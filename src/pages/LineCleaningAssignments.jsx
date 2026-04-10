@@ -227,10 +227,11 @@ export default function LineCleaningAssignments() {
     }));
     const assetsSnap = buildAssetsSnapshot(lineId);
 
-    // Initialize: default crew of 1 per area, total crew = number of areas
+    // Default crew = 1; manager sets actual crew size via the editor.
+    // Each area gets 1 as its initial ratio (only matters for concurrent areas).
     const empCounts = {};
     lineAreas.forEach(a => { empCounts[a.id] = 1; });
-    const defaultCrew = lineAreas.length || 1;
+    const defaultCrew = 1;
 
     const durationMinutes = calcDurationFromEmployees(assetsSnap, areasSnap, empCounts, defaultCrew);
 
@@ -263,23 +264,29 @@ export default function LineCleaningAssignments() {
     return Math.ceil(totalHours * 60) || 60;
   };
 
+  // Convert an "HH:mm" time string + the currently selected date into an ISO timestamp.
+  // Used because line_down_time is stored as a simple time string to avoid datetime-local
+  // browser inconsistencies; all internal calculations still use ISO.
+  const buildLineDownISO = (timeStr) => {
+    if (!timeStr || !selectedDate) return "";
+    try {
+      const d = new Date(`${selectedDate}T${timeStr}`);
+      return isNaN(d.getTime()) ? "" : d.toISOString();
+    } catch { return ""; }
+  };
+
   const recalculateSubsequentTimes = (assignmentsList, fromIndex) => {
-    // Helper: calculate effective start = max(line_down_time, previous_line_end)
-    // For first line: effective start = line_down_time
-    // For concurrent: effective start = same as previous line's effective start
     const cascadeStartTimes = (list, from) => {
       for (let i = Math.max(from, 0); i < list.length; i++) {
-        const lineDown = list[i].line_down_time;
+        const lineDown = list[i].line_down_time;   // "HH:mm" or ""
+        const lineDownISO = buildLineDownISO(lineDown);
 
         if (i === 0) {
-          // First line: starts at its down time
-          list[i].expected_line_down_time = lineDown || "";
+          list[i].expected_line_down_time = lineDownISO;
         } else if (list[i].concurrent) {
-          // Concurrent: same effective start as previous
           list[i].expected_line_down_time = list[i - 1].expected_line_down_time;
         } else {
-          // Sequential: start at the later of (line down time) or (previous group end)
-          // Find the max end time across the previous concurrent group
+          // Sequential: start at the later of (own line-down time) or (previous group's end)
           let maxPrevEnd = list[i - 1].estimated_end_time || "";
           let j = i - 1;
           while (j > 0 && list[j].concurrent) {
@@ -288,16 +295,13 @@ export default function LineCleaningAssignments() {
             j--;
           }
 
-          if (lineDown && maxPrevEnd) {
-            // Use the later of line down time or previous line's end
-            const downDate = parseISO(lineDown);
-            const prevEndDate = parseISO(maxPrevEnd);
-            list[i].expected_line_down_time = (downDate > prevEndDate ? lineDown : maxPrevEnd);
+          if (lineDownISO && maxPrevEnd) {
+            // ISO strings are lexicographically comparable for same-day times
+            list[i].expected_line_down_time = lineDownISO > maxPrevEnd ? lineDownISO : maxPrevEnd;
           } else if (maxPrevEnd) {
-            // No line down time set — just chain from previous end
             list[i].expected_line_down_time = maxPrevEnd;
-          } else if (lineDown) {
-            list[i].expected_line_down_time = lineDown;
+          } else if (lineDownISO) {
+            list[i].expected_line_down_time = lineDownISO;
           } else {
             list[i].expected_line_down_time = "";
           }
@@ -544,7 +548,13 @@ export default function LineCleaningAssignments() {
           duration_minutes: durationMinutes,
           estimated_end_time: estimatedEndTime,
           concurrent: isConcurrent,
-          line_down_time: a.expected_line_down_time, // preserve the original down time
+          // Convert saved line_down_time (may be ISO from old records or "HH:mm" from new) to "HH:mm"
+          line_down_time: (() => {
+            const t = a.line_down_time || a.expected_line_down_time;
+            if (!t) return "";
+            if (t.includes('T')) return format(parseISO(t), "HH:mm");  // ISO → HH:mm
+            return t;  // already HH:mm
+          })(),
         };
       });
 
@@ -720,29 +730,30 @@ export default function LineCleaningAssignments() {
                                     Line Down Time *
                                   </Label>
                                   <Input
-                                    type="datetime-local"
-                                    value={assignment.line_down_time ? format(parseISO(assignment.line_down_time), "yyyy-MM-dd'T'HH:mm") : ""}
-                                    onChange={(e) => {
-                                      handleLineDownTimeChange(index, e.target.value ? new Date(e.target.value).toISOString() : "");
-                                    }}
+                                    type="time"
+                                    value={assignment.line_down_time || ""}
+                                    onChange={(e) => handleLineDownTimeChange(index, e.target.value || "")}
                                     className="mt-1"
                                   />
-                                  <p className="text-xs text-slate-500 mt-1">When is this line available?</p>
+                                  <p className="text-xs text-slate-500 mt-1">What time does this line stop production?</p>
                                 </div>
                                 <div>
-                                  <Label>Expected Start</Label>
+                                  <Label>Cleaning Starts</Label>
                                   <div className="mt-1 px-3 py-2 bg-slate-50 border rounded-md text-sm text-slate-700">
                                     {assignment.expected_line_down_time ? 
-                                      format(parseISO(assignment.expected_line_down_time), "MMM d, h:mm a") : 
+                                      format(parseISO(assignment.expected_line_down_time), "h:mm a") : 
                                       "—"
                                     }
                                   </div>
-                                  {assignment.expected_line_down_time && assignment.line_down_time && 
-                                   assignment.expected_line_down_time !== assignment.line_down_time && (
+                                  {assignment.expected_line_down_time && assignment.line_down_time && (() => {
+                                    const ldISO = buildLineDownISO(assignment.line_down_time);
+                                    return ldISO && assignment.expected_line_down_time > ldISO;
+                                  })() && (
                                     <p className="text-xs text-amber-600 mt-1">
-                                      ⏳ Idle {(() => {
-                                        const diff = differenceInMinutes(parseISO(assignment.expected_line_down_time), parseISO(assignment.line_down_time));
-                                        return `${diff}m — waiting for prev line`;
+                                      ⏳ {(() => {
+                                        const ldISO = buildLineDownISO(assignment.line_down_time);
+                                        const diff = differenceInMinutes(parseISO(assignment.expected_line_down_time), parseISO(ldISO));
+                                        return `${diff}m idle — waiting for prev line to finish`;
                                       })()}
                                     </p>
                                   )}
@@ -930,9 +941,13 @@ export default function LineCleaningAssignments() {
                     <div>
                       <span className="text-slate-500">Line Down:</span>
                       <div className="font-medium text-slate-900">
-                        {assignment.line_down_time 
-                          ? format(parseISO(assignment.line_down_time), "h:mm a")
-                          : format(parseISO(assignment.expected_line_down_time), "h:mm a")}
+                        {assignment.line_down_time
+                          ? (assignment.line_down_time.includes('T')
+                            ? format(parseISO(assignment.line_down_time), "h:mm a")
+                            : format(new Date(`${selectedDate}T${assignment.line_down_time}`), "h:mm a"))
+                          : (assignment.expected_line_down_time
+                            ? format(parseISO(assignment.expected_line_down_time), "h:mm a")
+                            : "—")}
                       </div>
                     </div>
                     <div>
@@ -940,7 +955,12 @@ export default function LineCleaningAssignments() {
                       <div className="font-medium text-slate-900">
                         {format(parseISO(assignment.expected_line_down_time), "h:mm a")}
                       </div>
-                      {assignment.line_down_time && assignment.expected_line_down_time !== assignment.line_down_time && (
+                      {assignment.line_down_time && assignment.expected_line_down_time && (() => {
+                        const ldISO = assignment.line_down_time.includes('T')
+                          ? assignment.line_down_time
+                          : new Date(`${selectedDate}T${assignment.line_down_time}`).toISOString();
+                        return assignment.expected_line_down_time > ldISO;
+                      })() && (
                         <span className="text-[10px] text-amber-600">Waiting for prev line</span>
                       )}
                     </div>

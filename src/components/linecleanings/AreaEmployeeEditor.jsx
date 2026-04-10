@@ -260,7 +260,7 @@ export default function AreaEmployeeEditor({
       </div>
 
       <p className="text-xs text-violet-600 mb-3">
-        Set ratios to split the full crew across concurrent areas. All {crew} workers are distributed proportionally. Sequential areas receive all available workers.
+        By default all {crew} workers clean areas one at a time (<strong>sequential</strong>). Click between areas to make two run at the same time (<strong>concurrent</strong>), then set how many workers go to each.
       </p>
 
       <DragDropContext onDragEnd={handleDragEnd}>
@@ -378,17 +378,13 @@ export default function AreaEmployeeEditor({
                               )}
                             </>
                           ) : (
-                            <div className="flex items-center gap-2 text-xs text-slate-400">
-                              <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-2 text-xs">
+                              <div className="flex items-center gap-1.5 text-violet-700">
                                 <Users className="w-3.5 h-3.5" />
-                                <span className="font-medium">
-                                  {simulatedInfo[area.id]?.segmentSummary 
-                                    ? simulatedInfo[area.id].segmentSummary
-                                    : simulatedInfo[area.id] ? `${simulatedInfo[area.id].workers}p` : "All crew"}
-                                </span>
+                                <span className="font-semibold">All {crew}</span>
                               </div>
                               {simulatedInfo[area.id] && (
-                                <div className="flex items-center gap-1">
+                                <div className="flex items-center gap-1 text-slate-500">
                                   <Clock className="w-3 h-3" />
                                   {simulatedInfo[area.id].effectiveHours?.toFixed(1)}h
                                 </div>
