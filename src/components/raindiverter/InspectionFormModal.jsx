@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Loader2, Droplets, Sun, Camera } from "lucide-react";
+import { Loader2, Droplets, Sun, Camera, X } from "lucide-react";
+import SignatureCanvas from "react-signature-canvas";
 import { uploadFile } from "@/lib/adapters/storage";
 import { DiverterInspectionRepo, RainDiverterRepo } from "@/lib/adapters/database";
 import { cn } from "@/lib/utils";
@@ -34,6 +35,8 @@ export default function InspectionFormModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [photos, setPhotos] = useState([]);
   const [photoFiles, setPhotoFiles] = useState([]);
+  const sigCanvas = useRef(null);
+  const [hasSignature, setHasSignature] = useState(false);
 
   useEffect(() => {
     if (open && diverter) {
@@ -48,6 +51,8 @@ export default function InspectionFormModal({
       });
       setPhotos([]);
       setPhotoFiles([]);
+      setHasSignature(false);
+      setTimeout(() => sigCanvas.current?.clear(), 150);
     }
   }, [open, diverter]);
 
@@ -61,6 +66,12 @@ export default function InspectionFormModal({
 
   const handleSubmit = async () => {
     if (!formData.finding) return;
+
+    const signatureData = sigCanvas.current?.isEmpty() !== false ? null : sigCanvas.current?.toDataURL();
+    if (!signatureData) {
+      toast.error("Signature is required");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -87,7 +98,8 @@ export default function InspectionFormModal({
         wo_tag_attached: formData.wo_tag_attached,
         wo_number: formData.wo_number,
         notes: formData.notes,
-        photo_urls
+        photo_urls,
+        signature_data: signatureData
       });
 
       // Calculate new dry streak
@@ -138,7 +150,7 @@ export default function InspectionFormModal({
 
   if (!diverter) return null;
 
-  const isComplete = formData.finding && formData.bucket_emptied && formData.cleaned && formData.sanitized;
+  const isComplete = formData.finding && formData.bucket_emptied && formData.cleaned && formData.sanitized && hasSignature;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -296,6 +308,36 @@ export default function InspectionFormModal({
               ⚠️ This will reset the dry streak ({diverter.consecutive_dry_days} days)
             </div>
           )}
+
+          {/* Signature */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-base font-semibold">Inspector Signature *</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => { sigCanvas.current?.clear(); setHasSignature(false); }}
+              >
+                <X className="w-4 h-4 mr-1" />
+                Clear
+              </Button>
+            </div>
+            <div className="border-2 border-slate-300 rounded-lg bg-white overflow-hidden">
+              <SignatureCanvas
+                ref={sigCanvas}
+                canvasProps={{
+                  width: 460,
+                  height: 150,
+                  style: { width: "100%", height: "150px", touchAction: "none", cursor: "crosshair" }
+                }}
+                backgroundColor="rgb(255, 255, 255)"
+                penColor="black"
+                onEnd={() => setHasSignature(true)}
+              />
+            </div>
+            <p className="text-xs text-slate-500">Sign above to certify this inspection</p>
+          </div>
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t">
