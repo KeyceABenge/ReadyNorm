@@ -139,6 +139,30 @@ export default function OrganizationDashboard() {
     }
   }, [orgGroup?.id, user?.email, members.length]);
 
+  // Synthesize the owner entry from orgGroup.owner_email when the membership
+  // rows can't be read (RLS blocks until migration 010 runs). orgGroup is
+  // fetched from organization_groups which has SELECT USING(true) — always works.
+  const effectiveMembers = (() => {
+    if (!orgGroup?.owner_email) return members;
+    const ownerEmail = orgGroup.owner_email.toLowerCase();
+    const alreadyIn = members.some(
+      m => m.user_email?.toLowerCase() === ownerEmail && m.status === "active"
+    );
+    if (alreadyIn) return members;
+    return [
+      {
+        id: `synthetic-${orgGroup.id}`,
+        org_group_id: orgGroup.id,
+        user_email: orgGroup.owner_email,
+        user_name: orgGroup.owner_name || orgGroup.owner_email.split('@')[0],
+        role: "org_owner",
+        site_access_type: "all",
+        status: "active",
+      },
+      ...members,
+    ];
+  })();
+
   if (orgLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -185,7 +209,7 @@ export default function OrganizationDashboard() {
                 <button onClick={() => { navigator.clipboard.writeText(orgGroup.org_code); toast.success("Copied!"); }}>
                   <Copy className="w-3 h-3 text-slate-400 hover:text-slate-600" />
                 </button>
-                {userMembership && (
+                {(isOwner || isManager) && (
                   <Badge className={isOwner ? "bg-amber-600" : "bg-indigo-600"} variant="default">
                     {isOwner ? "Owner" : "Manager"}
                   </Badge>
@@ -207,7 +231,7 @@ export default function OrganizationDashboard() {
           <Card>
             <CardContent className="p-4 text-center">
               <Users className="w-5 h-5 text-indigo-600 mx-auto mb-1" />
-              <p className="text-2xl font-bold text-slate-900">{members.filter(m => m.status === "active").length + allSiteAdmins.filter(a => !members.some(m => m.user_email === a.email && m.status === "active")).length}</p>
+              <p className="text-2xl font-bold text-slate-900">{effectiveMembers.filter(m => m.status === "active").length + allSiteAdmins.filter(a => !effectiveMembers.some(m => m.user_email === a.email && m.status === "active")).length}</p>
               <p className="text-xs text-slate-500">Owners & Managers</p>
             </CardContent>
           </Card>
@@ -239,7 +263,7 @@ export default function OrganizationDashboard() {
 
           <TabsContent value="members">
             {isManager ? (
-              <OrgMembersList orgGroup={orgGroup} members={members} sites={sites} currentUserEmail={user?.email} allSiteAdmins={allSiteAdmins} />
+              <OrgMembersList orgGroup={orgGroup} members={effectiveMembers} sites={sites} currentUserEmail={user?.email} allSiteAdmins={allSiteAdmins} />
             ) : (
               <Card className="p-8 text-center">
                 <p className="text-slate-500">Only organization owners and managers can manage members.</p>

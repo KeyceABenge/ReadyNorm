@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState } from "react";
 import { invokeFunction } from "@/lib/adapters/functions";
-import { OrganizationRepo, OrgGroupMembershipRepo, AccessRequestRepo } from "@/lib/adapters/database";
+import { OrganizationRepo, OrganizationGroupRepo, OrgGroupMembershipRepo, AccessRequestRepo } from "@/lib/adapters/database";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -80,6 +80,31 @@ export default function CurrentAccountsPanel({ organizationId, currentUserEmail 
             approved_at: ar.reviewed_at,
             created_date: ar.created_date,
           });
+        }
+      }
+
+      // Guaranteed fallback: fetch the org group owner directly from
+      // organization_groups (SELECT policy is USING(true) — always readable).
+      // This ensures the owner always appears even when org_group_memberships
+      // is empty due to RLS (fixed by migration 010, but works before it too).
+      if (org.org_group_id) {
+        const groups = await OrganizationGroupRepo.filter({ id: org.org_group_id });
+        const grp = groups[0];
+        if (grp?.owner_email) {
+          const ownerKey = grp.owner_email.toLowerCase();
+          const alreadyIn = [...usersMap.values()].some(
+            u => u.email?.toLowerCase() === ownerKey
+          );
+          if (!alreadyIn) {
+            usersMap.set(ownerKey, {
+              id: `grp-owner-${grp.id}`,
+              full_name: grp.owner_name || grp.owner_email.split('@')[0],
+              email: grp.owner_email,
+              role: 'org_owner',
+              type: 'manager',
+              created_date: grp.created_date,
+            });
+          }
         }
       }
 
