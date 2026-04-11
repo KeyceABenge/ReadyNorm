@@ -18,12 +18,20 @@ import { supabase } from "@/api/supabaseClient";
  */
 export async function invokeFunction(functionName, payload = {}) {
   try {
+    // Explicitly get the session JWT. With sb_publishable_ keys, the SDK's
+    // default Bearer token is the publishable key (not a JWT), which Supabase's
+    // edge function gateway rejects as "Invalid JWT". We override it here.
+    const { data: { session } } = await supabase.auth.getSession();
+    const accessToken = session?.access_token;
+
     const { data, error } = await supabase.functions.invoke(functionName, {
       body: payload,
+      headers: accessToken
+        ? { 'Authorization': `Bearer ${accessToken}` }
+        : {},
     });
 
     if (error) {
-      // FunctionsHttpError exposes the raw Response as error.context
       const status = error?.context?.status ?? 500;
       let errorBody = { error: error.message };
       try {
