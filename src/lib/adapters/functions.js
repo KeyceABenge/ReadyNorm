@@ -16,32 +16,34 @@ import { supabase } from "@/api/supabaseClient";
  * @param {object} [payload={}] - Request body
  * @returns {Promise<{data: any, status: number}>} Axios-compatible response shape
  */
+// Supabase project constants
+const SUPABASE_URL = "https://zamrusolomzustgenpin.supabase.co";
+
+/**
+ * Invoke a backend function by name with a payload.
+ * Uses raw fetch with the user's session JWT in Authorization.
+ * Functions deployed with --no-verify-jwt skip gateway JWT validation
+ * and verify auth themselves using the service role key.
+ */
 export async function invokeFunction(functionName, payload = {}) {
   try {
-    // Explicitly get the session JWT. With sb_publishable_ keys, the SDK's
-    // default Bearer token is the publishable key (not a JWT), which Supabase's
-    // edge function gateway rejects as "Invalid JWT". We override it here.
     const { data: { session } } = await supabase.auth.getSession();
-    const accessToken = session?.access_token;
+    const token = session?.access_token;
 
-    const { data, error } = await supabase.functions.invoke(functionName, {
-      body: payload,
-      headers: accessToken
-        ? { 'Authorization': `Bearer ${accessToken}` }
-        : {},
-    });
+    const response = await fetch(
+      `${SUPABASE_URL}/functions/v1/${functionName}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(payload),
+      }
+    );
 
-    if (error) {
-      const status = error?.context?.status ?? 500;
-      let errorBody = { error: error.message };
-      try {
-        const parsed = await error.context?.json?.();
-        if (parsed) errorBody = parsed;
-      } catch (_) { /* non-JSON body */ }
-      return { data: errorBody, status };
-    }
-
-    return { data, status: 200 };
+    const data = await response.json();
+    return { data, status: response.status };
   } catch (e) {
     console.error(`[invokeFunction] ${functionName} threw:`, e);
     return { data: { error: String(e?.message ?? e) }, status: 500 };
