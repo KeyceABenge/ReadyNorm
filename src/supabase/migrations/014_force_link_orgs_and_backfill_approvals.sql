@@ -66,12 +66,7 @@ JOIN org_group_memberships m ON m.org_group_id = og.id::text
   AND m.role = 'org_owner'
   AND m.status = 'active'
 WHERE o.created_by IS NULL
-  AND og.owner_email IS NOT NULL
-  -- Link via the membership's allowed_site_ids if this org is listed there
-  AND (
-    m.site_access_type = 'all'
-    OR (m.site_access_type = 'selected' AND o.id::text = ANY(m.allowed_site_ids::text[]))
-  );
+  AND og.owner_email IS NOT NULL;
 
 -- ── 3. Force-approve reviewed access requests ─────────────────────────────────
 -- Any row where reviewed_at and reviewed_by are set but status is NOT 'denied'
