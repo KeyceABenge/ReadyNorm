@@ -4,8 +4,7 @@ import { supabase } from "@/api/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ReadyNormLogoText } from "@/components/brand/ReadyNormLogo";
+import { ReadyNormLogoText, ReadyNormLogoIcon } from "@/components/brand/ReadyNormLogo";
 import { Loader2, Mail, Lock, ArrowLeft } from "lucide-react";
 
 export default function ManagerLogin() {
@@ -144,35 +143,63 @@ export default function ManagerLogin() {
         backgroundRepeat: "no-repeat",
       }}
     >
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center space-y-2">
-          <div className="flex justify-center mb-4">
-            <ReadyNormLogoText className="h-10 w-auto text-slate-900" />
-          </div>
-          <CardTitle className="text-xl">
-            {mode === "signin" && "Sign In"}
-            {mode === "signup" && "Create Account"}
-            {mode === "forgot" && "Reset Password"}
-            {mode === "magic" && "Magic Link"}
-            {mode === "reset" && "Set New Password"}
-          </CardTitle>
-          <CardDescription>
-            {mode === "signin" && "Sign in with your email and password"}
-            {mode === "signup" && "Create a new account to get started"}
-            {mode === "forgot" && "We'll send you a password reset link"}
-            {mode === "magic" && "We'll email you a sign-in link"}
-            {mode === "reset" && "Enter your new password below"}
-          </CardDescription>
-        </CardHeader>
+      {/* Two-column card — stacks vertically on mobile */}
+      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
 
-        <CardContent className="space-y-4">
+        {/* ── Left: Branding panel ─────────────────────────────────────── */}
+        <div className="flex flex-col items-center justify-center gap-6 px-10 py-12 md:py-16 md:w-1/2 bg-white">
+          <ReadyNormLogoIcon className="w-24 h-24 object-contain" />
+
+          <div className="text-center space-y-1">
+            <p className="text-2xl font-bold text-slate-900 leading-snug">
+              <span className="text-sky-500">Standardize</span> sanitation.
+            </p>
+            <p className="text-2xl font-bold text-slate-900 leading-snug">
+              <span className="text-purple-500">Strengthen</span> food safety.
+            </p>
+            <p className="text-2xl font-bold text-slate-900 leading-snug">
+              <span className="text-emerald-500">Simplify</span> compliance.
+            </p>
+          </div>
+
+          <p className="text-sm text-slate-500 text-center max-w-xs leading-relaxed">
+            Manage MSS, track completion, and maintain audit readiness with real-time visibility across your entire operation.
+          </p>
+        </div>
+
+        {/* ── Divider — vertical on md+, horizontal on mobile ─────────── */}
+        <div className="hidden md:block w-px bg-slate-200 self-stretch my-8" />
+        <div className="block md:hidden h-px bg-slate-200 mx-8" />
+
+        {/* ── Right: Auth forms ─────────────────────────────────────────── */}
+        <div className="flex flex-col justify-center px-8 py-10 md:py-16 md:w-1/2">
+          {/* Header */}
+          <div className="mb-6 text-center">
+            <ReadyNormLogoText className="h-8 w-auto mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-slate-900">
+              {mode === "signin" && "Sign In"}
+              {mode === "signup" && "Create Account"}
+              {mode === "forgot" && "Reset Password"}
+              {mode === "magic" && "Magic Link"}
+              {mode === "reset" && "Set New Password"}
+            </h2>
+            <p className="text-sm text-slate-500 mt-1">
+              {mode === "signin" && "Sign in with your email and password"}
+              {mode === "signup" && "Create a new account to get started"}
+              {mode === "forgot" && "We'll send you a password reset link"}
+              {mode === "magic" && "We'll email you a sign-in link"}
+              {mode === "reset" && "Enter your new password below"}
+            </p>
+          </div>
+
+          {/* Alerts */}
           {message && (
-            <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm rounded-lg p-3">
+            <div className="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm rounded-lg p-3">
               {message}
             </div>
           )}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-800 text-sm rounded-lg p-3">
+            <div className="mb-4 bg-red-50 border border-red-200 text-red-800 text-sm rounded-lg p-3">
               {error}
             </div>
           )}
@@ -406,8 +433,8 @@ export default function ManagerLogin() {
               </button>
             </form>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
