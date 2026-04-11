@@ -26,12 +26,6 @@ export default function SiteSettings() {
 
   const queryClient = useQueryClient();
 
-  const { data: settings = [], isLoading } = useQuery({
-    queryKey: ["site_settings", orgId],
-    queryFn: () => SiteSettingsRepo.filter({ organization_id: orgId }),
-    enabled: !!orgId
-  });
-
   const storedSiteCode = localStorage.getItem('site_code');
   const { data: organizations = [] } = useQuery({
     queryKey: ["organization_by_site_code", storedSiteCode],
@@ -55,6 +49,12 @@ export default function SiteSettings() {
   // Derive orgId directly from query data — works even when data comes from cache
   // (queryFn side-effects don't run on cache hits, so useState would stay null)
   const orgId = organizations[0]?.id || null;
+
+  const { data: settings = [], isLoading } = useQuery({
+    queryKey: ["site_settings", orgId],
+    queryFn: () => SiteSettingsRepo.filter({ organization_id: orgId }),
+    enabled: !!orgId
+  });
 
   const settingsRecord = settings[0];
 
