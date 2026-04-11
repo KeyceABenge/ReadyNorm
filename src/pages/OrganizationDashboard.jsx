@@ -54,7 +54,7 @@ export default function OrganizationDashboard() {
     enabled: !!orgGroup?.id
   });
 
-  const { data: members = [] } = useQuery({
+  const { data: members = [], isLoading: membersLoading } = useQuery({
     queryKey: ["org_members", orgGroup?.id],
     queryFn: () => OrgGroupMembershipRepo.filter({ org_group_id: orgGroup.id }),
     enabled: !!orgGroup?.id
@@ -120,11 +120,24 @@ export default function OrganizationDashboard() {
   // Auto-repair: if this user IS the org group owner but has no membership row
   // (legacy account or row was never persisted), silently create the row so that
   // the user list, listOrgUsers edge function, and RLS all work going forward.
+  // IMPORTANT: only run AFTER membersLoading=false to avoid creating a duplicate
+  // row while the query result is still an empty [] placeholder.
   useEffect(() => {
-    if (!orgGroup || !user?.email || !isOrgGroupOwner) return;
-    const hasRow = members.some(
+    if (!orgGroup || !user?.email || !isOrgGroupOwner || membersLoading) return;
+
+    // Dedup: if there are multiple active rows for this user, keep the first, delete the rest
+    const myRows = members.filter(
       m => m.user_email?.toLowerCase() === user.email.toLowerCase() && m.status === "active"
     );
+    if (myRows.length > 1) {
+      const [, ...dupes] = myRows; // keep first, remove the rest
+      Promise.all(dupes.map(r => OrgGroupMembershipRepo.delete(r.id)))
+        .then(() => queryClient.invalidateQueries({ queryKey: ["org_members", orgGroup.id] }))
+        .catch(() => {});
+      return;
+    }
+
+    const hasRow = myRows.length === 1;
     if (!hasRow) {
       OrgGroupMembershipRepo.create({
         org_group_id: orgGroup.id,
@@ -137,7 +150,7 @@ export default function OrganizationDashboard() {
         .then(() => queryClient.invalidateQueries({ queryKey: ["org_members", orgGroup.id] }))
         .catch(() => {}); // silently ignore duplicates / constraint errors
     }
-  }, [orgGroup?.id, user?.email, members.length]);
+  }, [orgGroup?.id, user?.email, members.length, membersLoading]);
 
   // Synthesize the owner entry from orgGroup.owner_email when the membership
   // rows can't be read (RLS blocks until migration 010 runs). orgGroup is

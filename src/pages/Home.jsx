@@ -715,8 +715,15 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-2">
-              {orgGroupSites.length > 1 && userOrgMembership && ["org_owner", "org_manager"].includes(userOrgMembership.role) ? (
-                <SiteSwitcher currentSiteCode={siteCode} sites={orgGroupSites} />
+              {orgGroupSites.length > 1 && userOrgMembership && ["org_owner", "org_manager", "site_manager"].includes(userOrgMembership.role) ? (
+                <SiteSwitcher
+                  currentSiteCode={siteCode}
+                  sites={
+                    (userOrgMembership.role === "site_manager" && userOrgMembership.site_access_type === "selected" && userOrgMembership.allowed_site_ids?.length > 0)
+                      ? orgGroupSites.filter(s => userOrgMembership.allowed_site_ids.includes(s.id))
+                      : orgGroupSites
+                  }
+                />
               ) : (
                 <div className="flex items-center gap-1.5 bg-white border border-slate-200 px-3 py-1.5 rounded-full shadow-sm">
                   <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Site</span>
