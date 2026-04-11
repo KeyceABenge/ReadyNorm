@@ -54,8 +54,12 @@ export default function RoleFormModal({ open, onOpenChange, role, organizationId
   const [newQuotaFreq, setNewQuotaFreq] = useState("");
   const [newDepartment, setNewDepartment] = useState("");
 
-  // Derive existing departments from allRoles (filter out invalid values)
-  const existingDepartments = [...new Set(allRoles.map(r => r.department).filter(d => d && d !== "_new"))].sort();
+  // Derive existing departments from allRoles, and also include the currently
+  // selected department in case it was just typed (not yet saved to allRoles).
+  const existingDepartments = [...new Set([
+    ...allRoles.map(r => r.department),
+    form.department,
+  ].filter(d => d && d !== "_new" && d !== "_none"))].sort();
 
   useEffect(() => {
     if (role) {
