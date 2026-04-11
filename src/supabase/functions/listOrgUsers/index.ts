@@ -1,15 +1,21 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.49.4';
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, x-client-info',
+};
+
+function jsonResponse(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, x-client-info',
-      },
-    });
+    return new Response(null, { status: 204, headers: corsHeaders });
   }
 
   try {
@@ -23,7 +29,7 @@ Deno.serve(async (req) => {
     const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
 
     if (authError || !authUser) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return jsonResponse({ error: 'Unauthorized' }, 401);
     }
 
     const callerEmail = authUser.email!;
@@ -32,7 +38,7 @@ Deno.serve(async (req) => {
     const { organization_id } = await req.json();
 
     if (!organization_id) {
-      return Response.json({ error: 'organization_id is required' }, { status: 400 });
+      return jsonResponse({ error: 'organization_id is required' }, 400);
     }
 
     const { data: orgs } = await supabase
@@ -79,7 +85,7 @@ Deno.serve(async (req) => {
     console.log('[listOrgUsers] auth result — isOrgCreator:', isOrgCreator, '| isOrgMember:', isOrgMember, '| isOrgGroupOwner:', isOrgGroupOwner);
     if (!isOrgCreator && !isOrgMember && !isOrgGroupOwner) {
       console.log('[listOrgUsers] FORBIDDEN — returning 403');
-      return Response.json({ error: 'Forbidden', debug: { callerEmail, created_by: org?.created_by, org_group_id: org?.org_group_id } }, { status: 403 });
+      return jsonResponse({ error: 'Forbidden', debug: { callerEmail, created_by: org?.created_by, org_group_id: org?.org_group_id } }, 403);
     }
     const siteCode = org?.site_code;
 
@@ -242,8 +248,8 @@ Deno.serve(async (req) => {
 
     const users = Array.from(usersMap.values());
     console.log('[listOrgUsers] returning', users.length, 'users:', users.map((u: any) => u.email));
-    return Response.json({ users, debug: { callerEmail, org_group_id: org?.org_group_id, created_by: org?.created_by, approvedCount: approvedRequests?.length ?? 0 } });
+    return jsonResponse({ users, debug: { callerEmail, org_group_id: org?.org_group_id, created_by: org?.created_by, approvedCount: approvedRequests?.length ?? 0 } });
   } catch (error) {
-    return Response.json({ error: (error as Error).message }, { status: 500 });
+    return jsonResponse({ error: (error as Error).message }, 500);
   }
 });
