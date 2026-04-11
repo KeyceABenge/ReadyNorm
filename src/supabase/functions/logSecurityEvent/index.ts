@@ -1,15 +1,21 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.49.4';
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, x-client-info',
+};
+
+function jsonResponse(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, x-client-info',
-      },
-    });
+    return new Response(null, { status: 204, headers: corsHeaders });
   }
 
   try {
@@ -23,7 +29,7 @@ Deno.serve(async (req) => {
     const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
 
     if (authError || !authUser) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return jsonResponse({ error: 'Unauthorized' }, 401);
     }
 
     const { data: profile } = await supabase
@@ -47,7 +53,7 @@ Deno.serve(async (req) => {
     } = payload;
 
     if (!event_type || !organization_id) {
-      return Response.json({ error: 'Missing event_type or organization_id' }, { status: 400 });
+      return jsonResponse({ error: 'Missing event_type or organization_id' }, 400);
     }
 
     const userAgent = req.headers.get('user-agent') || 'unknown';
@@ -81,10 +87,10 @@ Deno.serve(async (req) => {
 
     if (insertError) throw insertError;
 
-    return Response.json({ status: 'logged', event_type });
+    return jsonResponse({ status: 'logged', event_type });
   } catch (error) {
     console.error("Security event log error:", (error as Error).message);
-    return Response.json({ error: (error as Error).message }, { status: 500 });
+    return jsonResponse({ error: (error as Error).message }, 500);
   }
 });
 
