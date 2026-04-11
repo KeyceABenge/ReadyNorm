@@ -4,7 +4,7 @@ import { supabase } from "@/api/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ReadyNormLogoText, ReadyNormLogoIcon } from "@/components/brand/ReadyNormLogo";
+import { ReadyNormLogoText } from "@/components/brand/ReadyNormLogo";
 import { Loader2, Mail, Lock, ArrowLeft } from "lucide-react";
 
 export default function ManagerLogin() {
@@ -148,7 +148,7 @@ export default function ManagerLogin() {
 
         {/* ── Left: Branding panel ─────────────────────────────────────── */}
         <div className="flex flex-col items-center justify-center gap-6 px-10 py-12 md:py-16 md:w-1/2 bg-white">
-          <ReadyNormLogoIcon className="w-24 h-24 object-contain" />
+          <img src="/readynorm-logo-large.svg" alt="ReadyNorm" className="w-40 h-auto object-contain" />
 
           <div className="text-center space-y-1">
             <p className="text-2xl font-bold text-slate-900 leading-snug">
