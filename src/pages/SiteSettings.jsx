@@ -22,7 +22,6 @@ export default function SiteSettings() {
   const [newFrequency, setNewFrequency] = useState("");
   const [uploading, setUploading] = useState(false);
   const [initialized, setInitialized] = useState(false);
-  const [orgId, setOrgId] = useState(null);
   const [activeSettingsTab, setActiveSettingsTab] = useState("shifts");
 
   const queryClient = useQueryClient();
@@ -43,7 +42,6 @@ export default function SiteSettings() {
       }
       const orgs = await OrganizationRepo.filter({ site_code: storedSiteCode, status: "active" });
       if (orgs.length > 0) {
-        setOrgId(orgs[0].id);
         return orgs;
       } else {
         localStorage.removeItem('site_code');
@@ -53,6 +51,10 @@ export default function SiteSettings() {
     },
     staleTime: 10 * 60 * 1000
   });
+
+  // Derive orgId directly from query data — works even when data comes from cache
+  // (queryFn side-effects don't run on cache hits, so useState would stay null)
+  const orgId = organizations[0]?.id || null;
 
   const settingsRecord = settings[0];
 
