@@ -49,7 +49,6 @@ export default function GeneralSiteSettings() {
   const [fiscalYearSettings, setFiscalYearSettings] = useState({});
   const [uploading, setUploading] = useState(false);
   const [initialized, setInitialized] = useState(false);
-  const [orgId, setOrgId] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [user, setUser] = useState(null);
@@ -74,7 +73,6 @@ export default function GeneralSiteSettings() {
       }
       const orgs = await OrganizationRepo.filter({ site_code: storedSiteCode, status: "active" });
       if (orgs.length > 0) {
-        setOrgId(orgs[0].id);
         return orgs;
       } else {
         localStorage.removeItem("site_code");
@@ -82,8 +80,12 @@ export default function GeneralSiteSettings() {
         return [];
       }
     },
+    staleTime: 10 * 60 * 1000,
   });
 
+  // Derive orgId directly from query data — works on cache hits too
+  // (queryFn side-effects don't run on cache hits, so useState would stay null)
+  const orgId = organizations[0]?.id || null;
   const organization = organizations[0];
 
   const { data: settings = [], isLoading } = useQuery({
