@@ -128,8 +128,13 @@ export default function RoleFormModal({ open, onOpenChange, role, organizationId
       toast.error("Role name is required");
       return;
     }
-    // Prevent saving "_new" as department
     const submitData = { ...form };
+    // If the new-department input is still open with text, capture it now
+    // (user typed a department but clicked "Create Role" instead of "Add")
+    if (showNewDeptInput && newDepartment.trim()) {
+      submitData.department = newDepartment.trim();
+    }
+    // Prevent saving the sentinel value "_new" as an actual department name
     if (submitData.department === "_new") {
       submitData.department = "";
     }
