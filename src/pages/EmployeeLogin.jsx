@@ -243,10 +243,10 @@ export default function EmployeeLogin() {
               <ProxiedImage src={currentSettings.logo_url} alt="" className="h-6 w-auto" />
             ) : (
               <div className="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center">
-                <span className="text-white text-xs font-bold">{organization.name?.charAt(0)}</span>
+                <span className="text-white text-xs font-bold">{(organization.site_name || organization.name)?.charAt(0)}</span>
               </div>
             )}
-            <span className="text-sm font-semibold text-slate-900 hidden sm:block">{organization.name}</span>
+            <span className="text-sm font-semibold text-slate-900 hidden sm:block">{organization.site_name || organization.name}</span>
           </div>
 
           <div className="flex items-center gap-1.5 bg-white border border-slate-200 px-3 py-1.5 rounded-full">

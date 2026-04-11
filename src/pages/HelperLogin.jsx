@@ -173,7 +173,7 @@ export default function HelperLogin() {
         </div>
 
         <div className="text-center mb-6">
-          <p className="text-slate-600">{organization.name}</p>
+          <p className="text-slate-600">{organization.site_name || organization.name}</p>
         </div>
 
         {/* Search */}

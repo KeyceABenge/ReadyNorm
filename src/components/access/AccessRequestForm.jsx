@@ -37,7 +37,7 @@ export default function AccessRequestForm({ organization, siteCode, existingRequ
         </div>
         <h2 className="text-xl font-bold text-slate-800">Access Request Pending</h2>
         <p className="text-sm text-slate-600 max-w-sm mx-auto">
-          Your request to access <span className="font-semibold">{organization.name}</span> is being reviewed by a manager. You'll be able to proceed once approved.
+          Your request to access <span className="font-semibold">{organization.site_name || organization.name}</span> is being reviewed by a manager. You'll be able to proceed once approved.
         </p>
         <div className="bg-slate-50 rounded-xl p-4 text-left max-w-xs mx-auto">
           <p className="text-xs text-slate-500 mb-1">Submitted as</p>
@@ -68,7 +68,7 @@ export default function AccessRequestForm({ organization, siteCode, existingRequ
         </div>
         <h2 className="text-xl font-bold text-slate-800">Access Denied</h2>
         <p className="text-sm text-slate-600 max-w-sm mx-auto">
-          Your request to access <span className="font-semibold">{organization.name}</span> was not approved. Please contact your manager for more information.
+          Your request to access <span className="font-semibold">{organization.site_name || organization.name}</span> was not approved. Please contact your manager for more information.
         </p>
         {existingRequest.review_notes && (
           <div className="bg-red-50 rounded-xl p-4 text-left max-w-xs mx-auto">
@@ -126,7 +126,7 @@ export default function AccessRequestForm({ organization, siteCode, existingRequ
       <div className="text-center mb-6">
         <h2 className="text-xl font-bold text-slate-800 mb-2">Request Access</h2>
         <p className="text-sm text-slate-600">
-          Enter your details to request access to <span className="font-semibold">{organization.name}</span>
+          Enter your details to request access to <span className="font-semibold">{organization.site_name || organization.name}</span>
         </p>
       </div>
 

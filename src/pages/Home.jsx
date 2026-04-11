@@ -584,7 +584,7 @@ export default function Home() {
             ) : (
               <ReadyNormLogoIcon className="w-20 h-20 mx-auto mb-4" />
             )}
-            <h1 className="text-xl font-semibold text-slate-800 mb-1">{organization.name}</h1>
+            <h1 className="text-xl font-semibold text-slate-800 mb-1">{organization.site_name || organization.name}</h1>
             <div className="inline-flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-slate-200 mb-4">
               <span className="text-xs text-slate-600">Site:</span>
               <code className="text-xs font-mono font-semibold text-slate-800">{siteCode}</code>
@@ -654,7 +654,7 @@ export default function Home() {
             </div>
             <h2 className="text-xl font-bold text-slate-800 mb-2">Manager Access Pending</h2>
             <p className="text-sm text-slate-600 mb-6">
-              Your request for manager access to <span className="font-semibold">{organization?.name}</span> is being reviewed by an admin. You'll be notified once approved.
+              Your request for manager access to <span className="font-semibold">{organization?.site_name || organization?.name}</span> is being reviewed by an admin. You'll be notified once approved.
             </p>
             <div className="space-y-2">
               <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
@@ -706,7 +706,7 @@ export default function Home() {
                 <ProxiedImage src={settings.logo_url} alt="" className="h-6 w-auto" />
               ) : (
                 <div className="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">{organization?.name?.charAt(0)}</span>
+                  <span className="text-white text-xs font-bold">{(organization?.site_name || organization?.name)?.charAt(0)}</span>
                 </div>
               )}
               <div className="hidden sm:block">
@@ -906,7 +906,7 @@ export default function Home() {
             <ReadyNormLogoIcon className="w-20 h-20 mx-auto mb-4" />
           )}
           <h1 className="text-2xl font-bold text-slate-800 mb-1">
-            {organization?.name || "Welcome"}
+            {organization?.site_name || organization?.name || "Welcome"}
           </h1>
           <div className="inline-flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-slate-200 mt-2 mb-4">
             <span className="text-xs text-slate-600">Site:</span>

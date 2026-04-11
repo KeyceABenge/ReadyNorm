@@ -176,9 +176,10 @@ export default function GeneralSiteSettings() {
         await OrganizationRepo.update(orgId, {
           manager_passcode: passcode || null,
           site_name: siteName || null,
+          name: siteName || null,
           logo_url: companyLogoUrl,
         });
-        queryClient.invalidateQueries({ queryKey: ["organization"] });
+        queryClient.invalidateQueries({ queryKey: ["organization_by_site_code"] });
 
         // Log security events for sensitive changes
         if (passcode !== (organization.manager_passcode || "")) {
