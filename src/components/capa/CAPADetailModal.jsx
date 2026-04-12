@@ -84,6 +84,7 @@ function CAPAActionForm({ capa, organization, user, onAdd }) {
         capa_id: capa.id,
         author_email: user?.email,
         author_name: user?.full_name,
+        content: `Added ${actionData.action_type} action: ${actionData.title}`,
         comment: `Added ${actionData.action_type} action: ${actionData.title}`,
         comment_type: "action_update",
       });
@@ -325,6 +326,7 @@ Focus on systemic issues, not individual blame. Be specific and actionable.`,
         capa_id: capa.id,
         author_email: user?.email,
         author_name: user?.full_name,
+        content: newComment,
         comment: newComment,
         comment_type: "comment",
       });
@@ -352,6 +354,7 @@ Focus on systemic issues, not individual blame. Be specific and actionable.`,
         capa_id: capa.id,
         author_email: user?.email,
         author_name: user?.full_name,
+        content: `Action "${action.title}" marked as ${newStatus}`,
         comment: `Action "${action.title}" marked as ${newStatus}`,
         comment_type: "action_update",
       });
@@ -390,6 +393,7 @@ Focus on systemic issues, not individual blame. Be specific and actionable.`,
         capa_id: capa.id,
         author_email: user?.email,
         author_name: user?.full_name,
+        content: `CAPA status changed to ${newStatus}`,
         comment: `CAPA status changed to ${newStatus}`,
         comment_type: "status_change",
       });
@@ -1273,6 +1277,7 @@ Focus on systemic improvements, training, process changes, and verification meas
                                     capa_id: capa.id,
                                     author_email: user?.email,
                                     author_name: user?.full_name,
+                                    content: `Action "${action.title}" marked as completed`,
                                     comment: `Action "${action.title}" marked as completed`,
                                     comment_type: "action_update",
                                   });
@@ -1459,6 +1464,7 @@ Focus on systemic improvements, training, process changes, and verification meas
                         capa_id: capa.id,
                         author_email: user?.email,
                         author_name: user?.full_name,
+                        content: `CAPA closed. Verification method: ${closeData.verification_method}`,
                         comment: `CAPA closed. Verification method: ${closeData.verification_method}`,
                         comment_type: "status_change",
                       });
@@ -1536,6 +1542,7 @@ Focus on systemic improvements, training, process changes, and verification meas
                         capa_id: capa.id,
                         author_email: user?.email,
                         author_name: user?.full_name,
+                        content: "Updated CAPA details",
                         comment: "Updated CAPA details",
                         comment_type: "system",
                       });

@@ -64,6 +64,7 @@ export default function AutoCAPATrigger({
         capa_id: capa.id,
         author_email: user?.email,
         author_name: user?.full_name,
+        content: `CAPA auto-created from ${sourceType}: ${sourceRecord?.id || 'N/A'}`,
         comment: `CAPA auto-created from ${sourceType}: ${sourceRecord?.id || 'N/A'}`,
         comment_type: "system",
       });

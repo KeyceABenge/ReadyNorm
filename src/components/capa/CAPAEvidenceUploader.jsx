@@ -51,6 +51,7 @@ export default function CAPAEvidenceUploader({ capa, organization, user, onUpdat
         capa_id: capa.id,
         author_email: user?.email,
         author_name: user?.full_name,
+        content: `Added ${files.length} evidence file(s): ${files.map(f => f.name).join(", ")}`,
         comment: `Added ${files.length} evidence file(s): ${files.map(f => f.name).join(", ")}`,
         comment_type: "evidence_added"
       });
@@ -82,6 +83,7 @@ export default function CAPAEvidenceUploader({ capa, organization, user, onUpdat
         capa_id: capa.id,
         author_email: user?.email,
         author_name: user?.full_name,
+        content: `Removed evidence file: ${removed.name}`,
         comment: `Removed evidence file: ${removed.name}`,
         comment_type: "system"
       });

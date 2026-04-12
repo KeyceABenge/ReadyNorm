@@ -20,6 +20,7 @@ import {
   CAPACommentRepo,
   CAPARepo
 } from "@/lib/adapters/database";
+import { sendEmail } from "@/lib/adapters/integrations";
 
 const STEPS = [
   { id: 1, title: "Basics", icon: FileText },
@@ -258,6 +259,7 @@ Please log in to view details and complete this action.
         capa_id: capa.id,
         author_email: user?.email,
         author_name: user?.full_name,
+        content: "CAPA created and opened",
         comment: "CAPA created and opened",
         comment_type: "system",
       });

@@ -256,6 +256,7 @@ function EffectivenessVerifyModal({ capa, user, onClose, onVerified }) {
         capa_id: capa.id,
         author_email: user?.email,
         author_name: user?.full_name,
+        content: `Effectiveness verified as "${status}". ${notes ? `Notes: ${notes}` : ""}`,
         comment: `Effectiveness verified as "${status}". ${notes ? `Notes: ${notes}` : ""}`,
         comment_type: "system"
       });

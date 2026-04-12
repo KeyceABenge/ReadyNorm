@@ -118,6 +118,7 @@ export default function CAPAActionEditModal({ open, onClose, action, organizatio
         capa_id: action.capa_id,
         author_email: user?.email,
         author_name: user?.full_name,
+        content: `Edited action "${formData.title}": ${editReason}`,
         comment: `Edited action "${formData.title}": ${editReason}`,
         comment_type: "action_update",
       });
