@@ -11,6 +11,7 @@ import {
 import { format, isBefore, isAfter, startOfMonth, endOfMonth, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { sendEmail } from "@/lib/adapters/integrations";
 
 export default function AuditDashboard({ 
   standards, sections, scheduledAudits, results, findings, onNavigate, organization 

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   Building2, Plus, Edit, Trash2, Phone, Mail, Calendar
@@ -193,6 +193,7 @@ export default function PestVendorSettings({ organizationId, vendors, onRefresh 
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>{editingVendor ? "Edit Vendor" : "Add Vendor"}</DialogTitle>
+            <DialogDescription>Configure pest control vendor information</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>

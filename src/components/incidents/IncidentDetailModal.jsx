@@ -13,6 +13,7 @@ import {
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { invokeLLM } from "@/lib/adapters/integrations";
 
 const WORKFLOW_STEPS = [
   { id: "open", label: "Reported", icon: AlertTriangle },

@@ -8,6 +8,7 @@ import { Loader2, Brain, TrendingUp, TrendingDown, Minus, CheckCircle2, Zap, Dro
 import { format, parseISO, subDays } from "date-fns";
 import { toast } from "sonner";
 import { EMPRiskPredictionRepo } from "@/lib/adapters/database";
+import { invokeLLM } from "@/lib/adapters/integrations";
 
 const RISK_COLORS = {
   low: { bg: "bg-emerald-100", text: "text-emerald-700", border: "border-emerald-300" },

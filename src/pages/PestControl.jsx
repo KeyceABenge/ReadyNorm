@@ -84,7 +84,7 @@ export default function PestControlPage() {
 
   const { data: riskPredictions = [] } = useQuery({
     queryKey: ["pest_risk_predictions", organizationId],
-    queryFn: () => PestRiskPredictionRepo.filter({ organization_id: organizationId }, "-prediction_date", 50),
+    queryFn: () => PestRiskPredictionRepo.filter({ organization_id: organizationId }, "-created_date", 50),
     enabled: !!organizationId
   });
 

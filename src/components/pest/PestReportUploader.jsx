@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   Upload, FileText, Loader2, CheckCircle2, AlertTriangle, 
@@ -24,6 +24,7 @@ import {
   PestServiceReportRepo
 } from "@/lib/adapters/database";
 import { uploadFile } from "@/lib/adapters/storage";
+import { invokeLLM } from "@/lib/adapters/integrations";
 
 export default function PestReportUploader({ 
   organizationId, vendors, devices, thresholds, serviceReports, locations = [], onRefresh, user 
@@ -998,6 +999,7 @@ Return as JSON.`,
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Review Service Report</DialogTitle>
+            <DialogDescription>Review extracted report data and findings</DialogDescription>
           </DialogHeader>
           {selectedReport && (
             <div className="space-y-4">

@@ -132,6 +132,41 @@ ALTER TABLE glass_breakage_incidents
 
 
 -- ═══════════════════════════════════════════════════════════════════════════════
+-- PEST_FINDINGS — risk prediction columns written by PestRiskAnalysis
+-- (PestRiskPredictionRepo maps to pest_findings)
+-- ═══════════════════════════════════════════════════════════════════════════════
+ALTER TABLE pest_findings
+  ADD COLUMN IF NOT EXISTS prediction_date        DATE,
+  ADD COLUMN IF NOT EXISTS risk_area_type          TEXT,
+  ADD COLUMN IF NOT EXISTS risk_score              INTEGER,
+  ADD COLUMN IF NOT EXISTS risk_level              TEXT,
+  ADD COLUMN IF NOT EXISTS contributing_factors    JSONB,
+  ADD COLUMN IF NOT EXISTS sanitation_correlation  JSONB,
+  ADD COLUMN IF NOT EXISTS recommended_actions     JSONB,
+  ADD COLUMN IF NOT EXISTS ai_analysis             TEXT,
+  ADD COLUMN IF NOT EXISTS trend_direction          TEXT,
+  ADD COLUMN IF NOT EXISTS confidence_score        NUMERIC;
+
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- EMP_SAMPLES — risk prediction columns written by EMPRiskAnalysis
+-- (EMPRiskPredictionRepo maps to emp_samples)
+-- ═══════════════════════════════════════════════════════════════════════════════
+ALTER TABLE emp_samples
+  ADD COLUMN IF NOT EXISTS prediction_date        DATE,
+  ADD COLUMN IF NOT EXISTS scope_type              TEXT,
+  ADD COLUMN IF NOT EXISTS risk_score              INTEGER,
+  ADD COLUMN IF NOT EXISTS risk_level              TEXT,
+  ADD COLUMN IF NOT EXISTS primary_concern         TEXT,
+  ADD COLUMN IF NOT EXISTS contributing_factors    JSONB,
+  ADD COLUMN IF NOT EXISTS sanitation_correlation  JSONB,
+  ADD COLUMN IF NOT EXISTS recommended_actions     JSONB,
+  ADD COLUMN IF NOT EXISTS trend_direction          TEXT,
+  ADD COLUMN IF NOT EXISTS ai_analysis             TEXT,
+  ADD COLUMN IF NOT EXISTS confidence_score        NUMERIC;
+
+
+-- ═══════════════════════════════════════════════════════════════════════════════
 -- Done.  Run this in Supabase SQL Editor, then retry creating/editing a
 -- controlled document — the "Stripping unknown column" warnings should stop
 -- and all fields will be persisted correctly.

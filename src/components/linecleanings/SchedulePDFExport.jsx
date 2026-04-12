@@ -6,6 +6,7 @@ import { format, parseISO, addMinutes, differenceInMinutes } from "date-fns";
 
 import { jsPDF } from "jspdf";
 import { computeAreaTimeline } from "./areaTimelineCalc";
+import { invokeLLM } from "@/lib/adapters/integrations";
 
 const STATUS_COLORS_RGB = {
   scheduled: [59, 130, 246],

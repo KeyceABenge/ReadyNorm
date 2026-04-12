@@ -59,7 +59,7 @@ export default function EnvironmentalMonitoring() {
 
   const { data: predictions = [] } = useQuery({
     queryKey: ["emp_predictions", organizationId],
-    queryFn: () => EMPRiskPredictionRepo.filter({ organization_id: organizationId }, "-prediction_date", 10),
+    queryFn: () => EMPRiskPredictionRepo.filter({ organization_id: organizationId }, "-created_date", 10),
     enabled: !!organizationId
   });
 

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { parseISO, differenceInDays, subDays } from "date-fns";
+import { invokeLLM } from "@/lib/adapters/integrations";
 
 // Coaching scenarios with generated guidance
 const COACHING_CATEGORIES = {

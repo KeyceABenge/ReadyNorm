@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { 
@@ -427,6 +427,7 @@ export default function PestDeviceManager({
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>{editingDevice ? "Edit Device" : "Add Device"}</DialogTitle>
+            <DialogDescription>Configure pest monitoring device details</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             {locations?.length > 0 && (
