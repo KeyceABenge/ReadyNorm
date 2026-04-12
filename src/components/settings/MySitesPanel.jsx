@@ -15,10 +15,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Globe, Building2, LogOut, Loader2, Copy, Check, AlertTriangle, MapPin } from "lucide-react";
+import { Globe, Building2, LogOut, Loader2, Copy, Check, AlertTriangle, MapPin, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { createPageUrl } from "@/utils";
+import { Input } from "@/components/ui/input";
 
 function clearSiteCache() {
   localStorage.removeItem('site_code');
@@ -65,6 +66,8 @@ function CopyButton({ text }) {
 
 export default function MySitesPanel({ currentUserEmail }) {
   const queryClient = useQueryClient();
+  const [editingGroupId, setEditingGroupId] = useState(null);
+  const [editName, setEditName] = useState("");
 
   // 1. Fetch user's active memberships
   const { data: memberships = [], isLoading: membershipsLoading } = useQuery({
@@ -151,6 +154,37 @@ export default function MySitesPanel({ currentUserEmail }) {
     onError: () => toast.error("Failed to remove site access"),
   });
 
+  // Rename an organization group
+  const renameGroupMutation = useMutation({
+    mutationFn: ({ groupId, name }) => OrganizationGroupRepo.update(groupId, { name }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my_org_groups"] });
+      setEditingGroupId(null);
+      setEditName("");
+      toast.success("Organization name updated");
+    },
+    onError: () => toast.error("Failed to rename organization"),
+  });
+
+  const startEditing = (group) => {
+    setEditingGroupId(group.id);
+    setEditName(group.name || "");
+  };
+
+  const cancelEditing = () => {
+    setEditingGroupId(null);
+    setEditName("");
+  };
+
+  const saveGroupName = (groupId) => {
+    const trimmed = editName.trim();
+    if (!trimmed) {
+      toast.error("Organization name cannot be empty");
+      return;
+    }
+    renameGroupMutation.mutate({ groupId, name: trimmed });
+  };
+
   // Resolve which sites a membership grants
   function getSitesForMembership(membership) {
     if (
@@ -211,16 +245,64 @@ export default function MySitesPanel({ currentUserEmail }) {
         const roleLabel = ROLE_LABELS[membership.role] || membership.role || "Member";
         const roleColor = ROLE_COLORS[membership.role] || "bg-slate-100 text-slate-700 border-slate-200";
 
+        const isOwner = membership.role === "org_owner";
+
         return (
           <Card key={membership.id} className="border border-slate-200">
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-2 min-w-0">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
                   <Building2 className="w-4 h-4 text-slate-500 shrink-0" />
-                  <div className="min-w-0">
-                    <p className="font-semibold text-slate-900 truncate">
-                      {orgGroup?.name || "Organization"}
-                    </p>
+                  <div className="min-w-0 flex-1">
+                    {editingGroupId === orgGroup?.id ? (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") saveGroupName(orgGroup.id);
+                            if (e.key === "Escape") cancelEditing();
+                          }}
+                          className="h-8 text-sm font-semibold"
+                          autoFocus
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-emerald-600 hover:bg-emerald-50 shrink-0"
+                          onClick={() => saveGroupName(orgGroup.id)}
+                          disabled={renameGroupMutation.isPending}
+                        >
+                          {renameGroupMutation.isPending
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : <Check className="w-3.5 h-3.5" />}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-slate-400 hover:bg-slate-100 shrink-0"
+                          onClick={cancelEditing}
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 group">
+                        <p className="font-semibold text-slate-900 truncate">
+                          {orgGroup?.name || "Organization"}
+                        </p>
+                        {isOwner && orgGroup && (
+                          <button
+                            onClick={() => startEditing(orgGroup)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-slate-600"
+                            title="Rename organization"
+                            type="button"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    )}
                     <p className="text-xs text-slate-500">
                       {membership.site_access_type === "all"
                         ? `Access to all ${memberSites.length} site${memberSites.length !== 1 ? "s" : ""}`
