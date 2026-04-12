@@ -1,7 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.49.4';
 
 const SENDGRID_API_KEY = Deno.env.get("SENDGRID_API_KEY");
-const FROM_EMAIL = "noreply@readynorm.com";
+const FROM_EMAIL = "noreply@readynorm.app";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
