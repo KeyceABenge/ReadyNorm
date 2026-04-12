@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { getNextColorIndex } from "./auditColors";
 import { AuditRequirementRepo, AuditSectionRepo, AuditStandardRepo } from "@/lib/adapters/database";
 import { uploadFile } from "@/lib/adapters/storage";
-import { invokeLLM } from "@/lib/adapters/integrations";
+import { extractDataFromFile } from "@/lib/adapters/integrations";
 
 export default function StandardUploadModal({ open, onClose, organization, existingStandards = [], onSuccess }) {
   const [formData, setFormData] = useState({
@@ -84,44 +84,33 @@ export default function StandardUploadModal({ open, onClose, organization, exist
 
   const parseStandardDocument = async (standard, fileUrl) => {
     try {
-      const result = await invokeLLM({
-        prompt: `Analyze this audit standard document and extract its structure.
-        
-Extract all sections and their requirements. For each section, identify:
-1. Section number/code (e.g., "2.1", "3.2.1")
-2. Section title
-3. Individual requirements within that section
+      console.log("[parseStandard] Starting extraction for:", fileUrl);
 
-For each requirement, identify:
-1. Requirement number/code
-2. Full requirement text
-3. Whether it's a critical/mandatory requirement
-
-Standard Name: ${standard.name}
-Standard Type: ${standard.type}
-
-Be thorough and extract ALL sections and requirements from the document.`,
-        file_urls: [fileUrl],
-        response_json_schema: {
+      const response = await extractDataFromFile({
+        file_url: fileUrl,
+        json_schema: {
           type: "object",
+          description: `Analyze this audit standard document ("${standard.name}", type: ${standard.type}) and extract ALL sections and their requirements. Be thorough — extract every section and every individual requirement from the entire document. For each section, identify the section number/code, title, description, and all requirements within it. For each requirement, identify the requirement number, full text, whether it is critical/mandatory, and any guidance notes.`,
           properties: {
             sections: {
               type: "array",
+              description: "All sections from the audit standard document",
               items: {
                 type: "object",
                 properties: {
-                  section_number: { type: "string" },
-                  title: { type: "string" },
-                  description: { type: "string" },
+                  section_number: { type: "string", description: "Section number/code (e.g., '2.1', '3.2.1')" },
+                  title: { type: "string", description: "Section title" },
+                  description: { type: "string", description: "Brief description of the section scope" },
                   requirements: {
                     type: "array",
+                    description: "All individual requirements within this section",
                     items: {
                       type: "object",
                       properties: {
-                        requirement_number: { type: "string" },
-                        text: { type: "string" },
-                        is_critical: { type: "boolean" },
-                        guidance_notes: { type: "string" }
+                        requirement_number: { type: "string", description: "Requirement number/code" },
+                        text: { type: "string", description: "Full requirement text" },
+                        is_critical: { type: "boolean", description: "True if this is a critical, mandatory, or fundamental requirement" },
+                        guidance_notes: { type: "string", description: "Guidance notes or interpretation help" }
                       }
                     }
                   }
@@ -131,6 +120,14 @@ Be thorough and extract ALL sections and requirements from the document.`,
           }
         }
       });
+
+      console.log("[parseStandard] extractDataFromFile response:", JSON.stringify(response).slice(0, 500));
+
+      if (response?.status === "error") {
+        throw new Error(response.details || "Extraction service returned an error");
+      }
+
+      const result = response?.output || response;
 
       if (result?.sections && result.sections.length > 0) {
         let sectionOrder = 0;

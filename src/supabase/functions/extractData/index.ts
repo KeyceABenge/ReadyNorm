@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
           }
         ],
         response_format: { type: "json_object" },
-        max_tokens: 4096,
+        max_tokens: 16384,
         temperature: 0.1,
       });
 
@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
           }
         ],
         response_format: { type: "json_object" },
-        max_tokens: 4096,
+        max_tokens: 16384,
         temperature: 0.1,
       });
 
