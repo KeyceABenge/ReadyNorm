@@ -27,6 +27,7 @@ export default function ChemicalInventoryPage() {
   const [employee, setEmployee] = useState(null);
   const [organizationId, setOrganizationId] = useState(null);
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [isManager, setIsManager] = useState(false);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -46,6 +47,12 @@ export default function ChemicalInventoryPage() {
           const orgs = await OrganizationRepo.filter({ site_code: storedSiteCode, status: "active" });
           if (orgs.length > 0) {
             setOrganizationId(orgs[0].id);
+            // Manager check: role admin, org creator, or site_role set by Home.jsx
+            const siteRole = localStorage.getItem("site_role");
+            const isOrgCreator = userData?.email && userData.email === orgs[0].created_by;
+            setIsManager(
+              userData?.role === "admin" || isOrgCreator || siteRole === "manager"
+            );
           } else {
             localStorage.removeItem('site_code');
             window.location.href = createPageUrl("Home");
@@ -57,8 +64,6 @@ export default function ChemicalInventoryPage() {
     };
     loadUser();
   }, []);
-
-  const isManager = user?.role === "admin";
 
   const { data: chemicals = [], isLoading: chemicalsLoading } = useQuery({
     queryKey: ["chemicals", organizationId],
