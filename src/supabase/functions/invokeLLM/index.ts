@@ -3,16 +3,22 @@ import OpenAI from 'npm:openai@4.52.0';
 
 const openai = new OpenAI({ apiKey: Deno.env.get("OPENAI_API_KEY") });
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, x-client-info',
+};
+
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, x-client-info',
-      },
-    });
+    return new Response(null, { status: 204, headers: corsHeaders });
   }
 
   try {
@@ -23,13 +29,13 @@ Deno.serve(async (req) => {
     const token = (req.headers.get('authorization') || '').replace('Bearer ', '');
     const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !authUser) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return jsonResponse({ error: 'Unauthorized' }, 401);
     }
 
     const { prompt, response_json_schema, file_urls, model } = await req.json();
 
     if (!prompt) {
-      return Response.json({ error: 'prompt is required' }, { status: 400 });
+      return jsonResponse({ error: 'prompt is required' }, 400);
     }
 
     // Build messages
@@ -168,15 +174,15 @@ Deno.serve(async (req) => {
     if (response_json_schema) {
       try {
         const parsed = JSON.parse(content);
-        return Response.json(parsed);
+        return jsonResponse(parsed);
       } catch {
-        return Response.json({ raw: content });
+        return jsonResponse({ raw: content });
       }
     }
 
-    return Response.json({ result: content });
+    return jsonResponse({ result: content });
   } catch (error) {
     console.error("invokeLLM error:", error);
-    return Response.json({ error: (error as Error).message }, { status: 500 });
+    return jsonResponse({ error: (error as Error).message }, 500);
   }
 });
