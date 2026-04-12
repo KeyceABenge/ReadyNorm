@@ -245,7 +245,8 @@ export default function MySitesPanel({ currentUserEmail }) {
         const roleLabel = ROLE_LABELS[membership.role] || membership.role || "Member";
         const roleColor = ROLE_COLORS[membership.role] || "bg-slate-100 text-slate-700 border-slate-200";
 
-        const isOwner = membership.role === "org_owner";
+        const isOwner = membership.role === "org_owner" ||
+          (currentUserEmail && orgGroup?.owner_email === currentUserEmail);
 
         return (
           <Card key={membership.id} className="border border-slate-200">
@@ -287,19 +288,20 @@ export default function MySitesPanel({ currentUserEmail }) {
                         </Button>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-1.5 group">
+                      <div className="flex items-center gap-2">
                         <p className="font-semibold text-slate-900 truncate">
                           {orgGroup?.name || "Organization"}
                         </p>
                         {isOwner && orgGroup && (
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => startEditing(orgGroup)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-slate-600"
+                            className="h-7 w-7 text-slate-400 hover:text-slate-700 hover:bg-slate-100 shrink-0"
                             title="Rename organization"
-                            type="button"
                           >
                             <Pencil className="w-3.5 h-3.5" />
-                          </button>
+                          </Button>
                         )}
                       </div>
                     )}
