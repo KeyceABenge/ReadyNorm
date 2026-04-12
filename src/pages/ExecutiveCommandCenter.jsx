@@ -20,6 +20,46 @@ import TopRisksSection from "@/components/executive/TopRisksSection";
 import ActionsRequired from "@/components/executive/ActionsRequired";
 import FiscalPeriodSelector, { buildPeriodOptions } from "@/components/executive/FiscalPeriodSelector";
 
+/**
+ * Build a data-driven narrative sentence from metrics when LLM is unavailable.
+ */
+function buildLocalNarrative(m, siteCount, isMultiSite) {
+  if (!m) return "";
+  const parts = [];
+
+  // Lead with score status
+  if (m.score >= 85) {
+    parts.push(`Quality health is strong at ${m.score}/100`);
+  } else if (m.score >= 70) {
+    parts.push(`Quality health is acceptable at ${m.score}/100`);
+  } else if (m.score >= 50) {
+    parts.push(`Quality health needs attention at ${m.score}/100`);
+  } else {
+    parts.push(`Quality health is critical at ${m.score}/100`);
+  }
+
+  // Top issues (max 3)
+  const highlights = [];
+  if (m.capas.overdue > 0) highlights.push(`${m.capas.overdue} overdue CAPA${m.capas.overdue > 1 ? "s" : ""}`);
+  if (m.emp.pathogenPositives > 0) highlights.push(`${m.emp.pathogenPositives} pathogen positive${m.emp.pathogenPositives > 1 ? "s" : ""}`);
+  if (m.audit.majorGaps > 0) highlights.push(`${m.audit.majorGaps} major audit gap${m.audit.majorGaps > 1 ? "s" : ""}`);
+  if (m.pest.critical > 0) highlights.push(`${m.pest.critical} critical pest exceedance${m.pest.critical > 1 ? "s" : ""}`);
+  if (m.complaints.criticalMajor > 0) highlights.push(`${m.complaints.criticalMajor} critical complaint${m.complaints.criticalMajor > 1 ? "s" : ""}`);
+  if (m.risks.highCritical > 0) highlights.push(`${m.risks.highCritical} high/critical risk${m.risks.highCritical > 1 ? "s" : ""}`);
+
+  if (highlights.length > 0) {
+    parts.push(`with ${highlights.slice(0, 3).join(", ")} requiring action`);
+  } else {
+    parts.push("with no critical issues identified");
+  }
+
+  if (isMultiSite) {
+    parts.push(`across ${siteCount} site${siteCount > 1 ? "s" : ""}`);
+  }
+
+  return parts.join(" ") + ".";
+}
+
 export default function ExecutiveCommandCenter() {
   const [narrativeText, setNarrativeText] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -155,8 +195,8 @@ Write ONE sentence (max 30 words) that is direct, actionable. ${isMultiSite ? "M
       });
       setNarrativeText(result.narrative);
     } catch (error) {
-      console.error("Failed to generate narrative:", error);
-      setNarrativeText("Unable to generate executive summary at this time.");
+      console.error("Failed to generate AI narrative, using computed summary:", error);
+      setNarrativeText(buildLocalNarrative(periodAllMetrics, allOrgIds.length, isMultiSite));
     } finally {
       setIsGenerating(false);
     }
