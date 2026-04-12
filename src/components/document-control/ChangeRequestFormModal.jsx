@@ -6,16 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Loader2, ChevronsUpDown, Check } from "lucide-react";
+import { Loader2, Search, Check, X, FileText, GraduationCap } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { DocumentChangeRequestRepo } from "@/lib/adapters/database";
 
 export default function ChangeRequestFormModal({ open, onOpenChange, changeRequest, documents, trainingDocuments = [], organizationId, user, onSaved }) {
   const [saving, setSaving] = useState(false);
-  const [docPickerOpen, setDocPickerOpen] = useState(false);
+  const [docSearch, setDocSearch] = useState("");
   const [form, setForm] = useState({
     document_id: changeRequest?.document_id || "",
     request_type: changeRequest?.request_type || "revision",
@@ -152,65 +150,72 @@ export default function ChangeRequestFormModal({ open, onOpenChange, changeReque
           {form.request_type !== "new_document" && (
             <div>
               <Label>Document to Change</Label>
-              <Popover open={docPickerOpen} onOpenChange={setDocPickerOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={docPickerOpen}
-                    className="w-full justify-between font-normal h-10 text-left"
+              {/* Selected document display */}
+              {form.document_id && selectedAny ? (
+                <div className="flex items-center gap-2 mt-1 p-2 bg-slate-50 border rounded-lg">
+                  {selectedDoc ? <FileText className="w-4 h-4 text-slate-500 shrink-0" /> : <GraduationCap className="w-4 h-4 text-violet-500 shrink-0" />}
+                  <span className="text-sm truncate flex-1">{allDocOptions.find(o => o.id === form.document_id)?.label}</span>
+                  <button
+                    type="button"
+                    onClick={() => { setForm(prev => ({ ...prev, document_id: "" })); setDocSearch(""); }}
+                    className="text-slate-400 hover:text-slate-600 shrink-0"
                   >
-                    <span className="truncate">
-                      {form.document_id
-                        ? allDocOptions.find(o => o.id === form.document_id)?.label || "Select document"
-                        : "Select document..."}
-                    </span>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                  <Command>
-                    <CommandInput placeholder="Search documents..." />
-                    <CommandList>
-                      <CommandEmpty>No documents found.</CommandEmpty>
-                      {documents.length > 0 && (
-                        <CommandGroup heading="Controlled Documents">
-                          {allDocOptions.filter(o => o.source === "controlled").map(opt => (
-                            <CommandItem
-                              key={opt.id}
-                              value={opt.label}
-                              onSelect={() => {
-                                setForm(prev => ({ ...prev, document_id: opt.id }));
-                                setDocPickerOpen(false);
-                              }}
-                            >
-                              <Check className={cn("mr-2 h-4 w-4", form.document_id === opt.id ? "opacity-100" : "opacity-0")} />
-                              <span className="truncate">{opt.label}</span>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      )}
-                      {unlinkedTrainingDocs.length > 0 && (
-                        <CommandGroup heading="Training Documents">
-                          {allDocOptions.filter(o => o.source === "training").map(opt => (
-                            <CommandItem
-                              key={opt.id}
-                              value={opt.label}
-                              onSelect={() => {
-                                setForm(prev => ({ ...prev, document_id: opt.id }));
-                                setDocPickerOpen(false);
-                              }}
-                            >
-                              <Check className={cn("mr-2 h-4 w-4", form.document_id === opt.id ? "opacity-100" : "opacity-0")} />
-                              <span className="truncate">{opt.label}</span>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      )}
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-1 border rounded-lg overflow-hidden">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input
+                      placeholder="Search documents by name..."
+                      value={docSearch}
+                      onChange={(e) => setDocSearch(e.target.value)}
+                      className="pl-9 border-0 border-b rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                    />
+                  </div>
+                  <div className="max-h-48 overflow-y-auto">
+                    {allDocOptions.filter(o => !docSearch || o.label.toLowerCase().includes(docSearch.toLowerCase())).length === 0 ? (
+                      <p className="text-sm text-slate-400 text-center py-4">No documents found</p>
+                    ) : (
+                      <>
+                        {allDocOptions.filter(o => o.source === "controlled" && (!docSearch || o.label.toLowerCase().includes(docSearch.toLowerCase()))).length > 0 && (
+                          <div>
+                            <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold px-3 py-1.5 bg-slate-50">Controlled Documents</p>
+                            {allDocOptions.filter(o => o.source === "controlled" && (!docSearch || o.label.toLowerCase().includes(docSearch.toLowerCase()))).map(opt => (
+                              <button
+                                type="button"
+                                key={opt.id}
+                                className="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 flex items-center gap-2 transition-colors"
+                                onClick={() => { setForm(prev => ({ ...prev, document_id: opt.id })); setDocSearch(""); }}
+                              >
+                                <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                <span className="truncate">{opt.label}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {allDocOptions.filter(o => o.source === "training" && (!docSearch || o.label.toLowerCase().includes(docSearch.toLowerCase()))).length > 0 && (
+                          <div>
+                            <p className="text-[10px] uppercase tracking-wider text-violet-400 font-semibold px-3 py-1.5 bg-violet-50">Training Documents</p>
+                            {allDocOptions.filter(o => o.source === "training" && (!docSearch || o.label.toLowerCase().includes(docSearch.toLowerCase()))).map(opt => (
+                              <button
+                                type="button"
+                                key={opt.id}
+                                className="w-full text-left px-3 py-2 text-sm hover:bg-violet-50 flex items-center gap-2 transition-colors"
+                                onClick={() => { setForm(prev => ({ ...prev, document_id: opt.id })); setDocSearch(""); }}
+                              >
+                                <GraduationCap className="w-3.5 h-3.5 text-violet-400 shrink-0" />
+                                <span className="truncate">{opt.label}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
