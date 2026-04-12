@@ -153,9 +153,13 @@ ALTER TABLE chemical_inventory_records   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chemical_count_entries       ENABLE ROW LEVEL SECURITY;
 
 -- Org-isolation policies (same pattern as migration 009)
+-- NOTE: CREATE POLICY has no IF NOT EXISTS, so we DROP first then CREATE.
 DO $$
 DECLARE
   tbl TEXT;
+  ops TEXT[] := ARRAY['select','insert','update','delete'];
+  op  TEXT;
+  pol TEXT;
 BEGIN
   FOR tbl IN
     SELECT unnest(ARRAY[
@@ -165,45 +169,30 @@ BEGIN
       'chemical_count_entries'
     ])
   LOOP
-    -- SELECT
-    EXECUTE format(
-      'CREATE POLICY IF NOT EXISTS %I ON %I FOR SELECT USING (
-         organization_id IN (
-           SELECT om.organization_id FROM org_members om WHERE om.user_id = auth.uid()
-         )
-       )',
-      'org_iso_select_' || tbl, tbl
-    );
+    FOREACH op IN ARRAY ops
+    LOOP
+      pol := 'org_iso_' || op || '_' || tbl;
 
-    -- INSERT
-    EXECUTE format(
-      'CREATE POLICY IF NOT EXISTS %I ON %I FOR INSERT WITH CHECK (
-         organization_id IN (
-           SELECT om.organization_id FROM org_members om WHERE om.user_id = auth.uid()
-         )
-       )',
-      'org_iso_insert_' || tbl, tbl
-    );
+      EXECUTE format('DROP POLICY IF EXISTS %I ON %I', pol, tbl);
 
-    -- UPDATE
-    EXECUTE format(
-      'CREATE POLICY IF NOT EXISTS %I ON %I FOR UPDATE USING (
-         organization_id IN (
-           SELECT om.organization_id FROM org_members om WHERE om.user_id = auth.uid()
-         )
-       )',
-      'org_iso_update_' || tbl, tbl
-    );
-
-    -- DELETE
-    EXECUTE format(
-      'CREATE POLICY IF NOT EXISTS %I ON %I FOR DELETE USING (
-         organization_id IN (
-           SELECT om.organization_id FROM org_members om WHERE om.user_id = auth.uid()
-         )
-       )',
-      'org_iso_delete_' || tbl, tbl
-    );
+      IF op = 'insert' THEN
+        EXECUTE format(
+          'CREATE POLICY %I ON %I FOR INSERT WITH CHECK (
+             organization_id IN (
+               SELECT om.organization_id FROM org_members om WHERE om.user_id = auth.uid()
+             )
+           )', pol, tbl
+        );
+      ELSE
+        EXECUTE format(
+          'CREATE POLICY %I ON %I FOR %s USING (
+             organization_id IN (
+               SELECT om.organization_id FROM org_members om WHERE om.user_id = auth.uid()
+             )
+           )', pol, tbl, upper(op)
+        );
+      END IF;
+    END LOOP;
   END LOOP;
 END $$;
 
