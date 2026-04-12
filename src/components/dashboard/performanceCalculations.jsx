@@ -13,16 +13,18 @@ import {
  * 
  *   1. Count unique task templates per frequency (deduplicated by title+area)
  *   2. Read working_days (e.g., M-F = 5) and shifts_per_day (e.g., 2) from settings
- *   3. For each frequency, calculate:
+ *   3. For daily tasks, read reset_times from frequency_settings.daily to determine
+ *      how many times per day the pool regenerates (dailyResetsPerDay).
+ *      - If resets >= shifts → each shift gets the FULL pool (no splitting)
+ *      - Per day = pool × dailyResetsPerDay (not × shiftsPerDay)
+ *   4. For non-daily tasks:
  *      - Per shift = pool / (cycle_days × shifts_per_day)
  *      - Per day = per_shift × shifts_per_day
- *      - Per week = pool (for weekly), or per_day × working_days (for longer cycles)
- *      - Per month = pool (for monthly), or scale up
- *      - etc.
- *   4. 100% means every task in every pool gets completed within its cycle
+ *   5. 100% means every task in every pool gets completed within its cycle
  * 
- * The manager configures: working days, shifts per day, and cycle lengths.
- * Targets are derived automatically — no manual quotas needed.
+ * Example: 40 daily tasks, 2 reset times (05:00 + 17:00), 2 shifts
+ *   → per shift = 40 (full pool, tasks reset between shifts)
+ *   → per day   = 40 × 2 resets = 80 (both shifts each complete the full pool)
  */
 
 // ─── NORMALIZER ───────────────────────────────────────────────────
@@ -100,8 +102,9 @@ export function calculateExpectedTasks({ tasks, siteSettings }) {
 
   // ── Per-shift targets ──
   const dailyPool = poolByFreq.daily || 0;
-  // Daily tasks regenerate based on reset times. If resets >= shifts, each shift
-  // gets the full pool (tasks reset between shifts). Otherwise split the remainder.
+  // Daily tasks regenerate once per reset time. If resets >= shifts, each shift
+  // gets the FULL pool (tasks reset between shifts — no splitting needed).
+  // If there are more shifts than resets, remaining shifts share the remainder.
   const dailyPerShift = dailyResetsPerDay >= shiftsPerDay
     ? dailyPool
     : Math.ceil(dailyPool / Math.ceil(shiftsPerDay / dailyResetsPerDay));
@@ -123,7 +126,11 @@ export function calculateExpectedTasks({ tasks, siteSettings }) {
   });
   
   const perShift = Object.values(perShiftByFreq).reduce((s, v) => s + v, 0);
-  const perDay = perShift * shiftsPerDay;
+  // perDay for daily tasks = pool × how many times it regenerates today.
+  // For non-daily tasks = per-shift × shifts-per-day (spread across the day).
+  const dailyPerDay = dailyPool * dailyResetsPerDay;
+  const nonDailyPerDay = NON_DAILY.reduce((s, f) => s + (perShiftByFreq[f] || 0), 0) * shiftsPerDay;
+  const perDay = dailyPerDay + nonDailyPerDay;
   
   // ── Period targets ──
   // The goal: 100% = every task in every pool completed within its cycle.

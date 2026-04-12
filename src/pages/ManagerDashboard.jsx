@@ -403,14 +403,12 @@ export default function ManagerDashboard() {
 
   const employeeMutation = useMutation({
     mutationFn: async ({ id, data }) => {
-      // Strip form-only fields that don't exist in the employees table.
-      // The adapter retry loop handles unknown columns, but filtering here
-      // means the INSERT succeeds on the first attempt with no 400 errors.
-      const { hire_date, birthday, evaluator_role, is_qa_team, display_badges, ...employeeData } = data;
+      // All fields (hire_date, birthday, evaluator_role, is_qa_team, display_badges)
+      // now exist in the employees table (added in migration 019).
       if (id) {
-        return EmployeeRepo.update(id, employeeData);
+        return EmployeeRepo.update(id, data);
       }
-      return EmployeeRepo.create({ ...employeeData, organization_id: orgId });
+      return EmployeeRepo.create({ ...data, organization_id: orgId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });

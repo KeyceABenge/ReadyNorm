@@ -1,5 +1,3 @@
-
-
 import * as DatabaseAdapters from "@/lib/adapters/database";
 import { uploadFile } from "@/lib/adapters/storage";
 import { isAuthenticated, getCurrentUser } from "@/lib/adapters/auth";
@@ -99,7 +97,7 @@ const entitiesProxy = new Proxy({}, {
   get: (target, entityName) => {
     const repo = ENTITY_TO_REPO_MAP[entityName];
     if (!repo) {
-      console.warn(`⚠️ [base44Client] Unknown entity: ${entityName}. Returning empty repo.`);
+      console.warn(`⚠️ [] Unknown entity: ${entityName}. Returning empty repo.`);
       return {
         filter: () => Promise.resolve([]),
         create: () => Promise.reject(new Error(`Unknown entity: ${entityName}`)),
@@ -112,7 +110,7 @@ const entitiesProxy = new Proxy({}, {
   }
 });
 
-// Expose base44 stub that proxies to Supabase adapters
+// Expose stub that proxies to Supabase adapters
 export const base44 = {
   entities: entitiesProxy,
   integrations: {

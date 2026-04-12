@@ -126,6 +126,87 @@ export default function Home() {
           // Not authenticated — fine
         }
 
+        // ── Membership gate ────────────────────────────────────────────────────
+        // If a site code was cached/resolved AND the user is authenticated, verify
+        // they still have active access before trusting it.
+        // Skip for URL-supplied codes (explicit navigation always trusted).
+        //
+        // Priority order:
+        //   1. Active org_group_memberships row  → allow
+        //   2. No membership rows at all AND user is creator/group-owner → allow (legacy)
+        //   3. Membership exists but inactive / no access to this site  → deny, clear cache
+        if (code && !urlSiteCode && userData) {
+          try {
+            const codeOrgs = await OrganizationRepo.filter({ site_code: code, status: "active" });
+            const codeOrg = codeOrgs[0];
+            if (codeOrg && codeOrg.org_group_id) {
+              const emailLower = userData.email.toLowerCase();
+
+              // Always fetch ALL membership rows (any status) for this user+group
+              const allMemberships = await OrgGroupMembershipRepo.filter({
+                user_email: emailLower,
+                org_group_id: codeOrg.org_group_id,
+              });
+              const activeMemberships = allMemberships.filter(m => m.status === "active");
+
+              const hasActiveMembership = activeMemberships.some(m =>
+                m.site_access_type === "all" ||
+                (Array.isArray(m.allowed_site_ids) && m.allowed_site_ids.includes(codeOrg.id))
+              );
+
+              if (hasActiveMembership) {
+                // ✅ Valid active membership — pass through
+              } else if (allMemberships.length === 0) {
+                // No membership rows at all → legacy org. Only trust if user is
+                // the actual creator or org group owner (no membership system yet).
+                const isCreator = codeOrg.created_by && codeOrg.created_by.toLowerCase() === emailLower;
+                let isGroupOwner = false;
+                if (!isCreator) {
+                  const ownedGroups = await OrganizationGroupRepo.filter({ owner_email: userData.email });
+                  isGroupOwner = ownedGroups.some(g => g.id === codeOrg.org_group_id);
+                }
+                if (!isCreator && !isGroupOwner) {
+                  console.log("[Home] Membership gate: no membership, not creator — clearing cache.");
+                  code = null;
+                  localStorage.removeItem('site_code');
+                  localStorage.removeItem('organization_id');
+                  localStorage.removeItem('site_role');
+                }
+              } else {
+                // Membership rows exist but none are active for this site → user left
+                console.log("[Home] Membership gate: user has left this site — clearing cache.");
+                code = null;
+                localStorage.removeItem('site_code');
+                localStorage.removeItem('organization_id');
+                localStorage.removeItem('site_role');
+              }
+            }
+          } catch (e) {
+            console.warn("[Home] Membership gate check failed, keeping cached code:", e?.message);
+          }
+        }
+
+        // Helper: given a list of orgs, return the first one the user still has
+        // active membership for. Falls back to the first org only when NO membership
+        // rows exist at all (truly legacy org before the membership model was added).
+        const pickAccessibleSite = async (orgs, emailLower) => {
+          for (const org of orgs) {
+            if (!org.site_code) continue;
+            if (!org.org_group_id) return org; // no membership system on this org
+            const allM = await OrgGroupMembershipRepo.filter({
+              user_email: emailLower,
+              org_group_id: org.org_group_id,
+            });
+            if (allM.length === 0) return org; // legacy — no rows yet
+            const hasActive = allM.filter(m => m.status === "active").some(m =>
+              m.site_access_type === "all" ||
+              (Array.isArray(m.allowed_site_ids) && m.allowed_site_ids.includes(org.id))
+            );
+            if (hasActive) return org;
+          }
+          return null;
+        };
+
         // If no code, try to resolve from user's org — each path is independent
         // NOTE: status:"active" is intentionally omitted from resolution paths to handle
         // legacy orgs migrated from Base44 that may not have the status field set.
@@ -139,8 +220,9 @@ export default function Home() {
               const storedOrgId = localStorage.getItem('organization_id');
               if (isUuid(storedOrgId)) {
                 const userOrgs = await OrganizationRepo.filter({ id: storedOrgId });
-                if (userOrgs.length > 0 && userOrgs[0].site_code) {
-                  code = userOrgs[0].site_code;
+                const accessible = await pickAccessibleSite(userOrgs, userData.email.toLowerCase());
+                if (accessible?.site_code) {
+                  code = accessible.site_code;
                   localStorage.setItem('site_code', code);
                   console.log("[Home] Path 1 (cached org_id) found code:", code);
                 }
@@ -152,11 +234,12 @@ export default function Home() {
           if (!code) {
             try {
               const createdOrgs = await OrganizationRepo.filter({ created_by: userData.email });
-              if (createdOrgs.length > 0 && createdOrgs[0].site_code) {
-                code = createdOrgs[0].site_code;
+              const accessible = await pickAccessibleSite(createdOrgs, userData.email.toLowerCase());
+              if (accessible?.site_code) {
+                code = accessible.site_code;
                 resolvedViaOwnership = true;
                 localStorage.setItem('site_code', code);
-                try { await updateCurrentUser({ organization_id: createdOrgs[0].id }); } catch (_) {}
+                try { await updateCurrentUser({ organization_id: accessible.id }); } catch (_) {}
                 console.log("[Home] Path 2 (created_by email) found code:", code);
               }
             } catch (e) { console.warn("[Home] Path 2 (created_by) failed:", e?.message); }
@@ -172,11 +255,12 @@ export default function Home() {
               for (const group of ownedGroups) {
                 if (!isUuid(group.id)) continue;
                 const groupSites = await OrganizationRepo.filter({ org_group_id: group.id });
-                if (groupSites.length > 0 && groupSites[0].site_code) {
-                  code = groupSites[0].site_code;
+                const accessible = await pickAccessibleSite(groupSites, userData.email.toLowerCase());
+                if (accessible?.site_code) {
+                  code = accessible.site_code;
                   resolvedViaOwnership = true;
                   localStorage.setItem('site_code', code);
-                  try { await updateCurrentUser({ organization_id: groupSites[0].id }); } catch (_) {}
+                  try { await updateCurrentUser({ organization_id: accessible.id }); } catch (_) {}
                   console.log("[Home] Path 3 (org group owner) found code:", code);
                   break;
                 }
@@ -259,13 +343,9 @@ export default function Home() {
                     }
                   } catch (_) {}
                 }
-                // Fallback: trust previously confirmed manager role stored in localStorage.
-                // This covers the case where the user was correctly verified as manager on a
-                // previous visit (site_role was set) but created_by/org_group checks fail
-                // (e.g., legacy data, migrated org, null field).
-                if (!resolvedViaOwnership && localStorage.getItem("site_role") === "manager") {
-                  resolvedViaOwnership = true;
-                }
+                // NOTE: We intentionally do NOT fall back to localStorage.site_role here.
+                // The membership gate above already validated access before this point,
+                // so an expired/stale site_role in localStorage must not re-grant access.
               }
 
               const isManager = userData && (

@@ -28,6 +28,9 @@ export default function Layout({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userLoading, setUserLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  // When the org logo URL exists but fails to load (e.g. CORS on localhost),
+  // fall back to the letter-initial square instead of a broken image.
+  const [navLogoError, setNavLogoError] = useState(false);
   const location = useLocation();
   
   // Initialize activeTab from URL parameter to preserve state across reloads
@@ -142,6 +145,9 @@ export default function Layout({ children, currentPageName }) {
   });
   
   const layoutOrgId = layoutOrg?.id || null;
+
+  // Reset logo error state whenever the org changes (e.g. site switcher)
+  useEffect(() => { setNavLogoError(false); }, [layoutOrg?.id]);
 
   const { data: siteSettings = [] } = useQuery({
     queryKey: ["site_settings", layoutOrgId],
@@ -356,8 +362,8 @@ export default function Layout({ children, currentPageName }) {
         isMobile && (isEmployeePage || isChildRoute) && "hidden"
       )}>
         <div className="w-full px-3 sm:px-4 md:px-6 max-w-[1600px] mx-auto">
-          <div className="flex items-center justify-between h-14 sm:h-16 py-2">
-            {/* Left: Back button (manager pages) or Logo (other pages) */}
+          <div className="flex items-center h-14 sm:h-16 py-2 gap-2 overflow-hidden">
+            {/* Left: Back button (manager pages) or Logo (other pages) — never shrinks */}
             {showManagerNav ? (
               <button 
                 onClick={() => window.location.href = createPageUrl("Home")}
@@ -371,22 +377,31 @@ export default function Layout({ children, currentPageName }) {
               </Link>
             )}
 
-            {/* Center: Org name (manager pages) or Desktop Nav (other pages) */}
+            {/* Center: Org name — takes remaining space, clips with truncate */}
             {showManagerNav && layoutOrg ? (
-              <div className="flex items-center gap-2">
-                <img src="/readynorm-logo-large.svg" alt="ReadyNorm" className="h-6 w-auto" />
-                <div className="h-5 w-px bg-slate-300" />
-                {layoutOrg.logo_url ? (
-                  <ProxiedImage src={layoutOrg.logo_url} alt="" className="h-5 w-auto" />
+              <div className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden">
+                <img src="/readynorm-logo-large.svg" alt="ReadyNorm" className="h-6 w-auto flex-shrink-0" />
+                <div className="h-5 w-px bg-slate-300 flex-shrink-0" />
+                {layoutOrg.logo_url && !navLogoError ? (
+                  <ProxiedImage
+                    src={layoutOrg.logo_url}
+                    alt=""
+                    className="h-5 w-auto flex-shrink-0 max-w-[48px] object-contain"
+                    onError={() => setNavLogoError(true)}
+                  />
                 ) : (
-                  <div className="w-7 h-7 rounded-lg bg-slate-900 flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">{layoutOrg.name?.charAt(0)}</span>
+                  <div className="w-7 h-7 rounded-lg bg-slate-900 flex items-center justify-center flex-shrink-0">
+                    <span className="text-white text-xs font-bold">
+                      {(layoutOrg.site_name || layoutOrg.name)?.charAt(0)}
+                    </span>
                   </div>
                 )}
-                <span className="text-sm font-semibold text-slate-900 hidden sm:block">{layoutOrg.name}</span>
+                <span className="text-sm font-semibold text-slate-900 truncate">
+                  {layoutOrg.site_name || layoutOrg.name}
+                </span>
               </div>
             ) : (isLoggedIn || isEmployeeMode) ? (
-              <div className="hidden md:flex items-center gap-1">
+              <div className="hidden md:flex items-center gap-1 flex-1">
                 {navItems.map(item => (
                   <Link 
                     key={item.href}
@@ -405,8 +420,8 @@ export default function Layout({ children, currentPageName }) {
               </div>
             ) : null}
 
-            {/* Right side actions */}
-            <div className="flex items-center gap-1 md:gap-2">
+            {/* Right side actions — never shrinks, always fully visible */}
+            <div className="flex items-center gap-1 md:gap-2 flex-shrink-0 ml-auto">
               {/* Site code pill removed from nav - now in footer */}
 
               {/* Employee layout - for employee-specific pages (desktop only) */}

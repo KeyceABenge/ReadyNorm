@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { OrganizationRepo, SiteSettingsRepo } from "@/lib/adapters/database";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -18,37 +18,60 @@ import { toast } from "sonner";
 import RegenerationDayBadge from "@/components/settings/RegenerationDayBadge";
 
 export default function SiteSettings() {
-  const [frequencySettings, setFrequencySettings] = useState({});
+  // Initialize with static defaults so Task Regeneration is never blank while loading.
+  // The useEffect below will merge in any saved DB values once settingsRecord resolves.
+  const [frequencySettings, setFrequencySettings] = useState({
+    daily:     { interval_type: "daily",          reset_times: ["05:00", "17:00"] },
+    weekly:    { interval_type: "days",            interval_days: 7,    reset_times: ["05:00"] },
+    biweekly:  { interval_type: "monthly_dates",   monthly_dates: [1, 15], reset_times: ["05:00"] },
+    monthly:   { interval_type: "monthly_dates",   monthly_dates: [1],  reset_times: ["05:00"] },
+    quarterly: { interval_type: "months",          interval_months: 3,  reset_times: ["05:00"] },
+    annually:  { interval_type: "yearly",          yearly_month: 10, yearly_day: 1, reset_times: ["05:00"] },
+  });
   const [newFrequency, setNewFrequency] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [initialized, setInitialized] = useState(false);
+  // Track whether the user has made edits that haven't been saved yet.
+  // While dirty, we don't overwrite frequencySettings from the DB so we
+  // don't clobber in-progress changes on a background refetch.
+  const freqDirtyRef = useRef(false);
   const [activeSettingsTab, setActiveSettingsTab] = useState("shifts");
+
+  // Helper used by all user-initiated frequency edits — marks state dirty
+  // so a background refetch doesn't overwrite in-progress changes.
+  const updateFreqSetting = (updater) => {
+    freqDirtyRef.current = true;
+    setFrequencySettings(updater);
+  };
 
   const queryClient = useQueryClient();
 
   const storedSiteCode = localStorage.getItem('site_code');
-  const { data: organizations = [] } = useQuery({
+  const { data: organizations = null } = useQuery({
     queryKey: ["organization_by_site_code", storedSiteCode],
     queryFn: async () => {
       if (!storedSiteCode) {
         window.location.href = createPageUrl("Home");
-        return [];
+        return null;
       }
       const orgs = await OrganizationRepo.filter({ site_code: storedSiteCode, status: "active" });
       if (orgs.length > 0) {
-        return orgs;
+        // Return a single object — same shape as Layout.jsx uses for this cache key.
+        // Both components share ["organization_by_site_code", siteCode] so they MUST
+        // agree on the shape; returning an array here overwrites Layout's single-object
+        // cache and breaks the nav site name / logo display.
+        return orgs[0];
       } else {
         localStorage.removeItem('site_code');
         window.location.href = createPageUrl("Home");
-        return [];
+        return null;
       }
     },
-    staleTime: 10 * 60 * 1000
+    staleTime: 10 * 60 * 1000, // match Layout.jsx — no need to re-hit DB on every mount
   });
 
   // Derive orgId directly from query data — works even when data comes from cache
   // (queryFn side-effects don't run on cache hits, so useState would stay null)
-  const orgId = organizations[0]?.id || null;
+  const orgId = organizations?.id || null;
 
   const { data: settings = [], isLoading } = useQuery({
     queryKey: ["site_settings", orgId],
@@ -62,45 +85,79 @@ export default function SiteSettings() {
   const fiscalStartMonth = settingsRecord?.fiscal_year_settings?.fiscal_year_start_month || 10;
   const fiscalStartDay = settingsRecord?.fiscal_year_settings?.fiscal_year_start_day || 1;
 
-  const defaultFrequencySettings = {
-    daily: { interval_type: "daily", reset_times: ["05:00", "17:00"] },
-    weekly: { interval_type: "days", interval_days: 7, reset_times: ["05:00"] },
-    biweekly: { interval_type: "monthly_dates", monthly_dates: [1, 15], reset_times: ["05:00"] },
-    monthly: { interval_type: "monthly_dates", monthly_dates: [1], reset_times: ["05:00"] },
-    quarterly: { interval_type: "months", interval_months: 3, reset_times: ["05:00"] },
-    annually: { interval_type: "yearly", yearly_month: fiscalStartMonth, yearly_day: fiscalStartDay, reset_times: ["05:00"] }
-  };
-
   useEffect(() => {
-    if (settingsRecord && !initialized) {
-      const savedFreqSettings = settingsRecord.frequency_settings || {};
-      setFrequencySettings({ ...defaultFrequencySettings, ...savedFreqSettings });
-      setInitialized(true);
-    }
-  }, [settingsRecord]);
+    // Don't overwrite user's in-progress edits with a background refetch.
+    if (freqDirtyRef.current) return;
+    // Merge saved DB values over the static defaults.
+    // This also handles the first-load case where no DB row existed yet:
+    // once the row is created (e.g. after first save), settingsRecord becomes
+    // defined and we sync the confirmed values back into state.
+    const savedFreqSettings = settingsRecord?.frequency_settings || {};
+    setFrequencySettings(prev => ({
+      ...prev,
+      // Patch the annually entry with the correct fiscal start (loaded from DB)
+      annually: {
+        ...prev.annually,
+        yearly_month: fiscalStartMonth,
+        yearly_day: fiscalStartDay,
+      },
+      // Spread the saved DB values last so they win over defaults
+      ...savedFreqSettings,
+    }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settingsRecord?.id, settingsRecord?.frequency_settings]);
 
   const saveSettingsMutation = useMutation({
     mutationFn: async (data) => {
-      if (settingsRecord) {
-        return SiteSettingsRepo.update(settingsRecord.id, data);
+      // Always pull the id from the payload — never from the closure.
+      // useMutation captures mutationFn at initial render; relying on the
+      // closure for settingsRecord means it's always the stale undefined
+      // from the first render, causing every save to call create() and get
+      // a 23505 duplicate-key error when a row already exists.
+      const { _settingsId, ...payload } = data;
+      if (_settingsId) {
+        return SiteSettingsRepo.update(_settingsId, payload);
       }
-      return SiteSettingsRepo.create(data);
+      // No existing record — try create; if we race a duplicate key, fetch
+      // the existing row and retry as update (handles stale-cache edge cases).
+      try {
+        return await SiteSettingsRepo.create(payload);
+      } catch (err) {
+        if (err?.code === '23505' && payload.organization_id) {
+          console.warn('[SiteSettings] 23505 on create — row already exists, retrying as update');
+          const existing = await SiteSettingsRepo.filter({ organization_id: payload.organization_id });
+          if (existing[0]?.id) {
+            return SiteSettingsRepo.update(existing[0].id, payload);
+          }
+        }
+        throw err;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["site_settings"] });
-      toast.success("Settings saved successfully");
     }
   });
 
   const handleSave = async () => {
+    if (!orgId) {
+      toast.error("No site selected — please reload the page.");
+      return;
+    }
     setUploading(true);
     try {
+      // Only send the fields being changed — do NOT spread settingsRecord.
+      // Spreading the full DB row into an update payload causes PGRST116 (0 rows
+      // updated) when any column in the spread triggers a WITH CHECK RLS failure,
+      // and pollutes the payload with id/created_date/etc. that shouldn't be SET.
       await saveSettingsMutation.mutateAsync({
-        ...settingsRecord,
+        _settingsId: settingsRecord?.id,
         organization_id: orgId,
         frequency_settings: frequencySettings,
       });
+      freqDirtyRef.current = false; // allow DB re-sync after save
+      toast.success("Settings saved successfully");
     } catch (error) {
+      console.error("[SiteSettings] Failed to save task regeneration settings:", error);
       toast.error("Failed to save settings");
     } finally {
       setUploading(false);
@@ -154,7 +211,8 @@ export default function SiteSettings() {
               setUploading(true);
               try {
                 await saveSettingsMutation.mutateAsync({
-                  ...settingsRecord,
+                  _settingsId: settingsRecord?.id,
+                  organization_id: orgId,
                   shifts: data.shifts,
                   auto_end_settings: data.auto_end_settings
                 });
@@ -174,10 +232,34 @@ export default function SiteSettings() {
               onSave={async (data) => {
                 setUploading(true);
                 try {
-                  await saveSettingsMutation.mutateAsync({
-                    ...settingsRecord,
-                    ...data
+                  // Build a minimal patch — only send the fields that are changing.
+                  // Do NOT spread settingsRecord; Postgres partial UPDATE only touches
+                  // the columns we pass, so other fields (shifts, frequency_settings…)
+                  // are left untouched in the DB row.
+                  const patch = { _settingsId: settingsRecord?.id, organization_id: orgId };
+
+                  // Deep-merge completion_target_settings so partial saves don't
+                  // clobber existing per-shift / per-role targets
+                  if (data.completion_target_settings) {
+                    patch.completion_target_settings = {
+                      ...(settingsRecord?.completion_target_settings || {}),
+                      ...data.completion_target_settings,
+                    };
+                  }
+                  // Forward any other top-level keys from data (e.g. excluded_roles_from_targets)
+                  Object.keys(data).forEach(k => {
+                    if (k !== "completion_target_settings") patch[k] = data[k];
                   });
+
+                  await saveSettingsMutation.mutateAsync(patch);
+                  // Only show success toast for full target saves, not visibility toggles
+                  if (data.completion_target_settings) {
+                    toast.success("Completion targets saved");
+                  }
+                } catch (e) {
+                  console.error("[SiteSettings] Failed to save completion targets:", e);
+                  toast.error("Failed to save completion targets");
+                  throw e; // re-throw so CompletionTargetsPanel doesn't clear hasChanges
                 } finally {
                   setUploading(false);
                 }
@@ -211,7 +293,7 @@ export default function SiteSettings() {
                       <Select 
                         value={freqSetting.interval_type}
                         onValueChange={(value) => {
-                          setFrequencySettings(prev => ({
+                          updateFreqSetting(prev => ({
                             ...prev,
                             [freq]: { ...prev[freq], interval_type: value }
                           }));
@@ -238,7 +320,7 @@ export default function SiteSettings() {
                           min="1"
                           value={freqSetting.interval_days || 7}
                           onChange={(e) => {
-                            setFrequencySettings(prev => ({
+                            updateFreqSetting(prev => ({
                               ...prev,
                               [freq]: { ...prev[freq], interval_days: parseInt(e.target.value) || 7 }
                             }));
@@ -255,7 +337,7 @@ export default function SiteSettings() {
                           value={(freqSetting.monthly_dates || [1]).join(", ")}
                           onChange={(e) => {
                             const dates = e.target.value.split(",").map(d => parseInt(d.trim())).filter(d => d >= 1 && d <= 31);
-                            setFrequencySettings(prev => ({
+                            updateFreqSetting(prev => ({
                               ...prev,
                               [freq]: { ...prev[freq], monthly_dates: dates.length > 0 ? dates : [1] }
                             }));
@@ -274,7 +356,7 @@ export default function SiteSettings() {
                           min="1"
                           value={freqSetting.interval_months || 3}
                           onChange={(e) => {
-                            setFrequencySettings(prev => ({
+                            updateFreqSetting(prev => ({
                               ...prev,
                               [freq]: { ...prev[freq], interval_months: parseInt(e.target.value) || 3 }
                             }));
@@ -291,7 +373,7 @@ export default function SiteSettings() {
                           <Select
                             value={String(freqSetting.yearly_month || 1)}
                             onValueChange={(value) => {
-                              setFrequencySettings(prev => ({
+                              updateFreqSetting(prev => ({
                                 ...prev,
                                 [freq]: { ...prev[freq], yearly_month: parseInt(value) }
                               }));
@@ -315,7 +397,7 @@ export default function SiteSettings() {
                             max="31"
                             value={freqSetting.yearly_day || 1}
                             onChange={(e) => {
-                              setFrequencySettings(prev => ({
+                              updateFreqSetting(prev => ({
                                 ...prev,
                                 [freq]: { ...prev[freq], yearly_day: parseInt(e.target.value) || 1 }
                               }));
@@ -347,7 +429,7 @@ export default function SiteSettings() {
                             onChange={(e) => {
                               const newTimes = [...(freqSetting.reset_times || ["05:00"])];
                               newTimes[idx] = e.target.value;
-                              setFrequencySettings(prev => ({
+                              updateFreqSetting(prev => ({
                                 ...prev,
                                 [freq]: { ...prev[freq], reset_times: newTimes }
                               }));
@@ -361,7 +443,7 @@ export default function SiteSettings() {
                               className="h-6 w-6 text-rose-600"
                               onClick={() => {
                                 const newTimes = (freqSetting.reset_times || ["05:00"]).filter((_, i) => i !== idx);
-                                setFrequencySettings(prev => ({
+                                updateFreqSetting(prev => ({
                                   ...prev,
                                   [freq]: { ...prev[freq], reset_times: newTimes }
                                 }));
@@ -378,7 +460,7 @@ export default function SiteSettings() {
                         className="h-7 text-xs px-2"
                         onClick={() => {
                           const newTimes = [...(freqSetting.reset_times || ["05:00"]), "12:00"];
-                          setFrequencySettings(prev => ({
+                          updateFreqSetting(prev => ({
                             ...prev,
                             [freq]: { ...prev[freq], reset_times: newTimes }
                           }));
@@ -408,7 +490,7 @@ export default function SiteSettings() {
                     onClick={() => {
                       const freq = newFrequency.toLowerCase().trim();
                       if (freq && !frequencySettings[freq]) {
-                        setFrequencySettings(prev => ({
+                        updateFreqSetting(prev => ({
                           ...prev,
                           [freq]: { interval_type: "days", interval_days: 7, reset_times: ["05:00"] }
                         }));

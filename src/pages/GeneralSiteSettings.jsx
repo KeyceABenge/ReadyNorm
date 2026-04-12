@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Loader2, Save, Settings, ShieldAlert, Trash2, AlertTriangle, Users, KeyRound, Building2, ArrowLeft, CheckCircle2, Shield } from "lucide-react";
+import { Loader2, Save, Settings, ShieldAlert, Trash2, AlertTriangle, Users, KeyRound, Building2, ArrowLeft, CheckCircle2, Shield, Globe } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +26,7 @@ import CurrentAccountsPanel from "@/components/access/CurrentAccountsPanel";
 import FacilityColorCodingPanel from "@/components/settings/FacilityColorCodingPanel";
 import FiscalYearPanel from "@/components/settings/FiscalYearPanel";
 import TransferOwnershipPanel from "@/components/access/TransferOwnershipPanel";
+import MySitesPanel from "@/components/settings/MySitesPanel";
 import useSecurityLogger from "@/hooks/useSecurityLogger";
 import { toast } from "sonner";
 import {
@@ -63,30 +64,29 @@ export default function GeneralSiteSettings() {
   }, []);
 
   const storedSiteCode = localStorage.getItem("site_code");
-  const { data: organizations = [] } = useQuery({
+  const { data: organization = null } = useQuery({
     queryKey: ["organization_by_site_code", storedSiteCode],
     queryFn: async () => {
       const storedSiteCode = localStorage.getItem("site_code");
       if (!storedSiteCode) {
         window.location.href = createPageUrl("Home");
-        return [];
+        return null;
       }
       const orgs = await OrganizationRepo.filter({ site_code: storedSiteCode, status: "active" });
       if (orgs.length > 0) {
-        return orgs;
+        // Return single object — same shape as Layout.jsx so the shared cache key
+        // doesn't get overwritten with an array and break the nav display.
+        return orgs[0];
       } else {
         localStorage.removeItem("site_code");
         window.location.href = createPageUrl("Home");
-        return [];
+        return null;
       }
     },
     staleTime: 10 * 60 * 1000,
   });
 
-  // Derive orgId directly from query data — works on cache hits too
-  // (queryFn side-effects don't run on cache hits, so useState would stay null)
-  const orgId = organizations[0]?.id || null;
-  const organization = organizations[0];
+  const orgId = organization?.id || null;
 
   const { data: settings = [], isLoading } = useQuery({
     queryKey: ["site_settings", orgId],
@@ -252,6 +252,10 @@ export default function GeneralSiteSettings() {
               <Shield className="w-3.5 h-3.5 mr-1" />
               Security
             </TabsTrigger>
+            <TabsTrigger value="my-sites" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white text-xs px-2 py-1.5">
+              <Globe className="w-3.5 h-3.5 mr-1" />
+              My Sites
+            </TabsTrigger>
             <TabsTrigger value="danger" className="data-[state=active]:bg-rose-600 data-[state=active]:text-white text-xs px-2 py-1.5 text-rose-600">
               <ShieldAlert className="w-3.5 h-3.5 mr-1" />
               Danger
@@ -385,6 +389,11 @@ export default function GeneralSiteSettings() {
               organization={organization}
               settings={settingsRecord}
             />
+          </TabsContent>
+
+          {/* My Sites Tab */}
+          <TabsContent value="my-sites">
+            <MySitesPanel currentUserEmail={user?.email} />
           </TabsContent>
 
           {/* Danger Tab */}

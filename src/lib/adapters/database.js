@@ -460,6 +460,19 @@ function createSupabaseRepository(tableName) {
           }
         }
 
+        // PGRST116 = 0 rows returned by .single() after UPDATE — means the WHERE id=...
+        // matched nothing (row deleted?) or RLS USING clause blocked the row from being
+        // updated. This is not auto-healable; log clearly so it shows in the console.
+        if (error.code === 'PGRST116') {
+          console.error(
+            `[DB] ${tableName}.update: 0 rows updated for id=${id}. ` +
+            `This usually means RLS blocked the update (check auth_can_access_org) ` +
+            `or the row no longer exists. Payload keys: ${Object.keys(payload).join(', ')}`
+          );
+          logDbError(tableName, 'update', error, { id, ...data });
+          throw error;
+        }
+
         logDbError(tableName, 'update', error, { id, ...data });
         throw error;
       }
