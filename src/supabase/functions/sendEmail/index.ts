@@ -63,7 +63,14 @@ Deno.serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("SendGrid error:", response.status, errorText);
-      return jsonResponse({ error: `SendGrid error: ${response.status}` }, 500);
+      // Return the actual SendGrid error so callers can diagnose
+      return jsonResponse({
+        error: `SendGrid error: ${response.status}`,
+        details: errorText,
+        hint: response.status === 403
+          ? "Sender identity not verified. Verify noreply@readynorm.com in SendGrid."
+          : undefined,
+      }, 502);
     }
 
     return jsonResponse({ success: true });

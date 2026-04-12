@@ -74,6 +74,13 @@ export async function sendEmail(params) {
     body: params.body,
     from_name: params.from_name || null,
   });
+
+  // Throw on error so callers' catch blocks fire
+  if (response.status >= 400 || response.data?.error) {
+    const detail = response.data?.hint || response.data?.details || response.data?.error || `sendEmail failed (${response.status})`;
+    throw new Error(detail);
+  }
+
   return response.data;
 }
 
