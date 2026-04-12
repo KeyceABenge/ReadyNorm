@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Plus, X, Upload, ChevronDown, ChevronUp, Trash2, Image } from "lucide-react";
 import { toast } from "sonner";
 import ProxiedImage from "@/components/ui/ProxiedImage";
+import { uploadFile } from "@/lib/adapters/storage";
 
 const COLOR_PRESETS = [
   { hex: "#ffffff", name: "White" },

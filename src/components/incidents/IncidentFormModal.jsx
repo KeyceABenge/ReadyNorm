@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, AlertTriangle, X, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { uploadFile } from "@/lib/adapters/storage";
 
 const CATEGORIES = [
   { value: "missed_task", label: "Missed Task" },

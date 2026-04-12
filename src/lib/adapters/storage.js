@@ -8,7 +8,7 @@
  *   "private-uploads" — private files requiring signed URLs (future use)
  *
  * All file operations in the app go through this module.
- * No Base44 dependency remains.
+ * No dependency remains.
  *
  * Setup required in Supabase Dashboard → Storage:
  *   1. Create bucket "public-uploads" (public = true)
@@ -44,10 +44,14 @@ function generatePath(file) {
 
 /**
  * Upload a file (public).
- * @param {File} file - Browser File object
+ * @param {File|{file: File}} fileOrWrapper - Browser File object, or { file: File }
  * @returns {Promise<{file_url: string}>} The public URL of the uploaded file
  */
-export async function uploadFile(file) {
+export async function uploadFile(fileOrWrapper) {
+  // Accept both uploadFile(file) and uploadFile({ file })
+  const file = fileOrWrapper instanceof File ? fileOrWrapper : fileOrWrapper?.file;
+  if (!file) throw new Error("uploadFile: no file provided");
+
   const path = generatePath(file);
 
   const { error } = await supabase.storage

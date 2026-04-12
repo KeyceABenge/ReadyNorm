@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { addDays, format } from "date-fns";
 import { Upload, X, Loader2 } from "lucide-react";
 import { CustomerComplaintRepo } from "@/lib/adapters/database";
+import { uploadFile } from "@/lib/adapters/storage";
 
 const COMPLAINT_TYPES = [
   { value: "foreign_material", label: "Foreign Material" },

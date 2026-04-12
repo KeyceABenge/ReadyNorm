@@ -23,6 +23,7 @@ import {
   PestLocationRepo,
   PestServiceReportRepo
 } from "@/lib/adapters/database";
+import { uploadFile } from "@/lib/adapters/storage";
 
 export default function PestReportUploader({ 
   organizationId, vendors, devices, thresholds, serviceReports, locations = [], onRefresh, user 

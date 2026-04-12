@@ -12,6 +12,7 @@ import {
   CAPACommentRepo,
   CAPARepo
 } from "@/lib/adapters/database";
+import { uploadFile } from "@/lib/adapters/storage";
 
 export default function CAPAEvidenceUploader({ capa, organization, user, onUpdate }) {
   const [isUploading, setIsUploading] = useState(false);

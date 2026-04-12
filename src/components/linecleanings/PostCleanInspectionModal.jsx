@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 
 import SignatureCanvas from "react-signature-canvas";
 import { useTranslation } from "@/components/i18n";
+import { uploadFile } from "@/lib/adapters/storage";
 
 export default function PostCleanInspectionModal({ 
   open, 

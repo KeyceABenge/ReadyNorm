@@ -12,6 +12,7 @@ import { Plus, Search, Edit2, Trash2, Camera, AlertTriangle, CheckCircle2 } from
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { EMPSiteRepo } from "@/lib/adapters/database";
+import { uploadFile } from "@/lib/adapters/storage";
 
 const ZONE_OPTIONS = [
   { value: "zone_1", label: "Zone 1 - Product Contact", color: "#ef4444" },

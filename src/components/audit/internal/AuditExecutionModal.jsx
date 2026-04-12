@@ -17,6 +17,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { generateUniqueCapaId } from "@/components/capa/capaUtils";
 import { AuditFindingRepo, AuditResultRepo, CAPARepo, ScheduledAuditRepo } from "@/lib/adapters/database";
+import { uploadFile } from "@/lib/adapters/storage";
 
 const complianceOptions = [
   { value: "compliant", label: "Compliant", icon: CheckCircle2, color: "text-green-600 bg-green-100" },

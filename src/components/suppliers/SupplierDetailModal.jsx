@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { SupplierRepo } from "@/lib/adapters/database";
+import { uploadFile } from "@/lib/adapters/storage";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

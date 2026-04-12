@@ -7,6 +7,7 @@ import { AreaSignOffRepo } from "@/lib/adapters/database";
 import { CheckCircle2, XCircle, AlertTriangle, Camera, Loader2, X as XIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { uploadFile } from "@/lib/adapters/storage";
 
 export default function InlinePostCleanInspection({ signOff, inspector, onInspected, t }) {
   const [result, setResult] = useState(null); // "pass" | "fail" | null

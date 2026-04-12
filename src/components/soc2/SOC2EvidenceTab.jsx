@@ -11,6 +11,7 @@ import { Plus, FolderOpen, Upload, FileText, Loader2, ExternalLink } from "lucid
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { EvidenceRepo } from "@/lib/adapters/database";
+import { uploadFile } from "@/lib/adapters/storage";
 
 const FOLDER_LABELS = {
   access_reviews: "Access Reviews",

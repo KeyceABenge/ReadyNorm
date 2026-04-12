@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { addDays, format } from "date-fns";
 import { Upload, X, Loader2 } from "lucide-react";
 import { IssueRepo } from "@/lib/adapters/database";
+import { uploadFile } from "@/lib/adapters/storage";
 
 const CATEGORIES = [
   { value: "quality", label: "Quality" }, { value: "food_safety", label: "Food Safety" },
@@ -41,7 +42,7 @@ export default function IssueFormModal({ open, onOpenChange, organizationId, use
     if (files.length === 0) return;
     setIsUploading(true);
     try {
-      const results = await Promise.all(files.map(file => uploadFile({ file })));
+      const results = await Promise.all(files.map(file => uploadFile(file)));
       setFormData(prev => ({ ...prev, evidence_urls: [...prev.evidence_urls, ...results.map(r => r.file_url)] }));
     } catch (e) { toast.error("Failed to upload file"); }
     setIsUploading(false);

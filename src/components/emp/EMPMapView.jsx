@@ -11,6 +11,7 @@ import { ZoomIn, ZoomOut, Layers, AlertTriangle, CheckCircle2, Upload, Plus, Loa
 import { format, parseISO, subDays } from "date-fns";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { FacilityMapRepo } from "@/lib/adapters/database";
+import { uploadFile } from "@/lib/adapters/storage";
 
 const ZONE_COLORS = {
   zone_1: "#ef4444",

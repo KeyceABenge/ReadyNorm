@@ -37,6 +37,7 @@ import {
 import ReportConditionModal from "@/components/quality/ReportConditionModal";
 import CleaningProgressBar from "@/components/preop/CleaningProgressBar";
 import PreOpFinalSignOff from "@/components/linecleanings/PreOpFinalSignOff";
+import { uploadFile } from "@/lib/adapters/storage";
 
 export default function PreOpInspection() {
   const [qaEmployee, setQaEmployee] = useState(null);

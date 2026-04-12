@@ -18,6 +18,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { SanitationDowntimeRepo } from "@/lib/adapters/database";
+import { uploadFile } from "@/lib/adapters/storage";
 
 const REASON_CATEGORIES = [
   { value: "equipment_contamination", label: "Equipment Contamination" },
