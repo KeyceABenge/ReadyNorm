@@ -158,7 +158,11 @@ export default function MySitesPanel({ currentUserEmail }) {
   const renameGroupMutation = useMutation({
     mutationFn: ({ groupId, name }) => OrganizationGroupRepo.update(groupId, { name }),
     onSuccess: () => {
+      // Invalidate every cache that holds the org group name
       queryClient.invalidateQueries({ queryKey: ["my_org_groups"] });
+      queryClient.invalidateQueries({ queryKey: ["org_group_for_site"] });
+      queryClient.invalidateQueries({ queryKey: ["org_group_dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["executive_org_group"] });
       setEditingGroupId(null);
       setEditName("");
       toast.success("Organization name updated");
