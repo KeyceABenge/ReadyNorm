@@ -88,6 +88,29 @@ ALTER TABLE audit_standards
 
 
 -- ═══════════════════════════════════════════════════════════════════════════════
+-- AUDIT_PLANS — columns written by AuditPlanManager
+-- ═══════════════════════════════════════════════════════════════════════════════
+ALTER TABLE audit_plans
+  ADD COLUMN IF NOT EXISTS name                    TEXT,
+  ADD COLUMN IF NOT EXISTS standards_included      JSONB,
+  ADD COLUMN IF NOT EXISTS total_scheduled_audits  INTEGER DEFAULT 0;
+
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- SCHEDULED_AUDITS — columns written by AuditPlanManager
+-- ═══════════════════════════════════════════════════════════════════════════════
+ALTER TABLE scheduled_audits
+  ADD COLUMN IF NOT EXISTS plan_id                 UUID,
+  ADD COLUMN IF NOT EXISTS standard_name           TEXT,
+  ADD COLUMN IF NOT EXISTS section_id              UUID,
+  ADD COLUMN IF NOT EXISTS section_number          TEXT,
+  ADD COLUMN IF NOT EXISTS section_title           TEXT,
+  ADD COLUMN IF NOT EXISTS due_date                DATE,
+  ADD COLUMN IF NOT EXISTS frequency               TEXT,
+  ADD COLUMN IF NOT EXISTS quarter                 INTEGER;
+
+
+-- ═══════════════════════════════════════════════════════════════════════════════
 -- Done.  Run this in Supabase SQL Editor, then retry creating/editing a
 -- controlled document — the "Stripping unknown column" warnings should stop
 -- and all fields will be persisted correctly.

@@ -49,6 +49,7 @@ export default function AuditPlanManager({
       if (!plan) {
         plan = await AuditPlanRepo.create({
           organization_id: organization.id,
+          title: `${selectedYear} Annual Audit Plan`,
           name: `${selectedYear} Annual Audit Plan`,
           year: selectedYear,
           standards_included: standards.map(s => ({ standard_id: s.id, standard_name: s.name })),
@@ -78,9 +79,11 @@ export default function AuditPlanManager({
           if (!existing) {
             await ScheduledAuditRepo.create({
               organization_id: organization.id,
+              audit_plan_id: plan.id,
               plan_id: plan.id,
               standard_id: section.standard_id,
               standard_name: standard?.name,
+              title: `${section.section_number || ''} ${section.title} - Q${quarter}`.trim(),
               section_id: section.id,
               section_number: section.section_number,
               section_title: section.title,
