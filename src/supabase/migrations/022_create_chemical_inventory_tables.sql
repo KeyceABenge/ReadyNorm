@@ -152,13 +152,11 @@ ALTER TABLE chemical_inventory_settings  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chemical_inventory_records   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chemical_count_entries       ENABLE ROW LEVEL SECURITY;
 
--- Org-isolation policies (same pattern as migration 009)
+-- Org-isolation policies — uses auth_can_access_org() from migration 009.
 -- NOTE: CREATE POLICY has no IF NOT EXISTS, so we DROP first then CREATE.
 DO $$
 DECLARE
   tbl TEXT;
-  ops TEXT[] := ARRAY['select','insert','update','delete'];
-  op  TEXT;
   pol TEXT;
 BEGIN
   FOR tbl IN
@@ -169,30 +167,15 @@ BEGIN
       'chemical_count_entries'
     ])
   LOOP
-    FOREACH op IN ARRAY ops
-    LOOP
-      pol := 'org_iso_' || op || '_' || tbl;
-
-      EXECUTE format('DROP POLICY IF EXISTS %I ON %I', pol, tbl);
-
-      IF op = 'insert' THEN
-        EXECUTE format(
-          'CREATE POLICY %I ON %I FOR INSERT WITH CHECK (
-             organization_id IN (
-               SELECT om.organization_id FROM org_members om WHERE om.user_id = auth.uid()
-             )
-           )', pol, tbl
-        );
-      ELSE
-        EXECUTE format(
-          'CREATE POLICY %I ON %I FOR %s USING (
-             organization_id IN (
-               SELECT om.organization_id FROM org_members om WHERE om.user_id = auth.uid()
-             )
-           )', pol, tbl, upper(op)
-        );
-      END IF;
-    END LOOP;
+    -- Single permissive policy covering all operations (same as migration 009 pattern)
+    pol := 'org_iso_all_' || tbl;
+    EXECUTE format('DROP POLICY IF EXISTS %I ON %I', pol, tbl);
+    EXECUTE format(
+      'CREATE POLICY %I ON %I FOR ALL
+         USING  (auth_can_access_org(organization_id))
+         WITH CHECK (auth_can_access_org(organization_id))',
+      pol, tbl
+    );
   END LOOP;
 END $$;
 
