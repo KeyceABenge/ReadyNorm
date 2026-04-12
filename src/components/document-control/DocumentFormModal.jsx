@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Upload, FileText } from "lucide-react";
 import { toast } from "sonner";
+import { uploadFile } from "@/lib/adapters/storage";
 
 const DOCUMENT_TYPES = [
   { value: "policy", label: "Policy" },
@@ -55,7 +56,7 @@ export default function DocumentFormModal({ open, onOpenChange, document, organi
 
     setUploading(true);
     try {
-      const { file_url } = await uploadFile({ file });
+      const { file_url } = await uploadFile(file);
       setForm(prev => ({ ...prev, file_url }));
       toast.success("File uploaded");
     } catch (err) {
