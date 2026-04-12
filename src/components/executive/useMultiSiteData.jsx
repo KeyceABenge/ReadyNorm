@@ -190,17 +190,12 @@ export function useExecutiveData(siteCode) {
       try {
         let result;
 
-        // Try edge function first
-        console.log("[ECC] Calling backend function for siteCode:", siteCode);
         const response = await invokeFunction("fetchExecutiveData", { siteCode });
 
         if (response.status >= 200 && response.status < 300 && response.data?.rawData) {
           result = response.data;
-          console.log("[ECC] Edge function succeeded");
         } else {
           // Edge function failed — fall back to client-side direct fetch
-          const reason = response.data?.error || `HTTP ${response.status}`;
-          console.warn("[ECC] Edge function failed (", reason, "), falling back to client-side fetch");
           result = await fetchDirectFromSupabase(siteCode);
         }
 
@@ -214,7 +209,6 @@ export function useExecutiveData(siteCode) {
         setOrgGroupSites(sites || []);
         setRawData(data);
         setMeta(_meta || null);
-        console.log("[ECC] Data loaded:", sites?.length, "sites,", data?.tasks?.length, "tasks,", _meta?.failures?.length || 0, "failures");
       } catch (err) {
         console.error("[ECC] Failed to load executive data:", err);
         if (thisLoadId === loadIdRef.current) {

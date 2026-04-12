@@ -1,5 +1,5 @@
 /**
- * AUTH ADAPTER — Supabase Authentication (no Base44)
+ * AUTH ADAPTER — Supabase Authentication ()
  * All auth goes through Supabase. No fallback.
  */
 import { supabase } from "@/api/supabaseClient";
@@ -20,21 +20,9 @@ function isMissingUserTableError(error) {
 async function getSupabaseSession() {
   try {
     const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      console.log("✓ [Auth] Session exists for:", session.user?.email);
-      // Also log the token expiry to detect if session is stale
-      const expiresIn = session.expires_in;
-      const expiresAt = session.expires_at;
-      console.log("  ℹ️ Session valid for", expiresIn, "seconds, expires at:", new Date(expiresAt * 1000).toISOString());
-    } else {
-      console.log("❌ [Auth] No session found");
-      // Check if there's auth data in localStorage that we might be missing
-      const storedAuth = localStorage.getItem('supabase.auth.token');
-      console.log("  ℹ️ Auth token in localStorage:", storedAuth ? 'YES' : 'NO');
-    }
     return session;
   } catch (error) {
-    console.error("❌ [Auth] Error getting session:", error.message);
+    console.error("[Auth] Error getting session:", error.message);
     return null;
   }
 }
@@ -47,31 +35,22 @@ async function getSupabaseSession() {
  * Optional: Later you can add a User table for custom fields.
  */
 export async function getCurrentUser() {
-  console.log("🔍 [Auth] Checking current user session...");
   const session = await getSupabaseSession();
-  if (!session?.user) {
-    console.log("❌ [Auth] No session found");
-    return null;
-  }
+  if (!session?.user) return null;
 
   const sbUser = session.user;
-  console.log("✓ [Auth] Session found for:", sbUser.email);
   
-  // Build user data from Supabase auth user
-  // Attempt to get User profile as a bonus, but don't block on it
   const userData = {
     id: sbUser.id,
     email: sbUser.email,
     full_name: sbUser.user_metadata?.full_name || sbUser.email.split('@')[0],
-    role: 'user', // Default role, will be overridden by profile if it exists
+    role: 'user',
     organization_id: null,
   };
 
   // Optional profile lookup only if a User table exists in this project
   if (ENABLE_USER_TABLE_LOOKUPS && !userTableUnavailable) {
     try {
-      console.log("🔍 [Auth] Attempting to look up User profile for email:", sbUser.email);
-
       const { data, error } = await supabase
         .from('User')
         .select('*')
@@ -79,22 +58,15 @@ export async function getCurrentUser() {
         .maybeSingle();
 
       if (!error && data) {
-        console.log("✓ [Auth] Profile found:", data?.email);
         Object.assign(userData, data);
       } else if (error) {
         if (isMissingUserTableError(error)) {
           userTableUnavailable = true;
-          console.log("ℹ️ [Auth] User table not present. Skipping future User-table lookups.");
-        } else {
-          console.log("ℹ️ [Auth] User table lookup:", error.code === 'PGRST116' ? "no profile exists (will use defaults)" : error.message);
         }
       }
     } catch (err) {
       if (isMissingUserTableError(err)) {
         userTableUnavailable = true;
-        console.log("ℹ️ [Auth] User table not present. Skipping future User-table lookups.");
-      } else {
-        console.log("ℹ️ [Auth] User table query skipped:", err.message);
       }
     }
   }
@@ -104,7 +76,6 @@ export async function getCurrentUser() {
     userData.organization_id = null;
   }
 
-  console.log("✓ [Auth] Returning user:", userData.email, "role:", userData.role);
   return userData;
 }
 
@@ -134,7 +105,6 @@ export async function updateCurrentUser(data) {
   if (Object.keys(payload).length === 0) return;
 
   try {
-    console.log("🔍 [Auth] Updating user profile with:", Object.keys(data));
     const { error } = await supabase
       .from('User')
       .update(payload)
@@ -145,15 +115,11 @@ export async function updateCurrentUser(data) {
         userTableUnavailable = true;
         return;
       }
-      console.warn("⚠️ [Auth] Update error:", error.message);
       // Silently continue if User table doesn't exist yet
-      // This allows the app to work without the User table for now
       return;
     }
-    console.log("✓ [Auth] User profile updated");
   } catch (err) {
-    console.log("ℹ️ [Auth] Profile update skipped (User table may not exist):", err.message);
-    // Don't throw - let the app continue
+    // Don't throw — let the app continue
   }
 }
 

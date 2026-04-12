@@ -32,7 +32,6 @@ export const AuthProvider = ({ children }) => {
     const timer = setTimeout(() => {
       setIsLoadingAuth(prev => {
         if (prev) {
-          console.warn("⚠️ [AuthContext] Auth bootstrap watchdog tripped; forcing login state.");
           setUser(null);
           setIsAuthenticated(false);
           setAuthError({ type: 'auth_required' });
@@ -52,8 +51,6 @@ export const AuthProvider = ({ children }) => {
     let unsubscribe = () => {};
     try {
       unsubscribe = onAuthStateChange((event, session) => {
-        console.log("🔐 [AuthContext] Auth state changed:", event);
-
         if (event === 'PASSWORD_RECOVERY') {
           window.location.href = '/ManagerLogin?mode=reset';
           return;
@@ -80,14 +77,11 @@ export const AuthProvider = ({ children }) => {
             }
             if (storedOrgName) currentUser.organization_name = storedOrgName;
 
-            console.log("✓ [AuthContext] Session applied for:", currentUser.email);
             setUser(currentUser);
             setIsAuthenticated(true);
             setAuthError(null);
             setIsLoadingAuth(false);
           } else if (event === 'INITIAL_SESSION') {
-            // No stored session at startup — go to login.
-            console.log("⚠️ [AuthContext] No existing session, showing login");
             setUser(null);
             setIsAuthenticated(false);
             setAuthError({ type: 'auth_required' });
@@ -95,7 +89,6 @@ export const AuthProvider = ({ children }) => {
           }
           // SIGNED_IN / TOKEN_REFRESHED with null session is unusual; watchdog covers it.
         } else if (event === 'SIGNED_OUT') {
-          console.log("👋 [AuthContext] User signed out");
           setUser(null);
           setIsAuthenticated(false);
           setAuthError({ type: 'auth_required' });

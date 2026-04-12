@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { isAuthenticated, getCurrentUser } from "@/lib/adapters/auth";
-import { OrganizationRepo, SiteSettingsRepo } from "@/lib/adapters/database";
+import { OrganizationRepo } from "@/lib/adapters/database";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -149,24 +149,14 @@ export default function Layout({ children, currentPageName }) {
   // Reset logo error state whenever the org changes (e.g. site switcher)
   useEffect(() => { setNavLogoError(false); }, [layoutOrg?.id]);
 
-  const { data: siteSettings = [] } = useQuery({
-    queryKey: ["site_settings", layoutOrgId],
-    queryFn: () => SiteSettingsRepo.filter({ organization_id: layoutOrgId }),
-    enabled: !!layoutOrgId,
-    staleTime: 5 * 60 * 1000, // 5 min cache
-    initialData: []
-  });
-
-  const settings = siteSettings[0] || { app_name: "Sanitation Manager", logo_url: null };
+  const isEmployeePage = (currentPageName?.startsWith("Employee") && currentPageName !== "EmployeeProfile") || 
+    currentPageName === "LineCleaningDetail" || 
+    currentPageName === "PreOpInspection" ||
+    currentPageName === "RainDiverters";
 
   // Load employee from localStorage for employee-specific pages
   useEffect(() => {
-    const isEmployeeSpecificPage = (currentPageName?.startsWith("Employee") && currentPageName !== "EmployeeProfile") || 
-      currentPageName === "LineCleaningDetail" || 
-      currentPageName === "PreOpInspection" ||
-      currentPageName === "RainDiverters";
-    
-    if (isEmployeeSpecificPage) {
+    if (isEmployeePage) {
       const stored = localStorage.getItem("selectedEmployee");
       if (stored) {
         setEmployee(JSON.parse(stored));
@@ -195,12 +185,6 @@ export default function Layout({ children, currentPageName }) {
 
   const isLoggedIn = !!user;
   const isEmployeeMode = !!employee;
-  
-  // Determine if we're on an employee page
-    const isEmployeePage = (currentPageName?.startsWith("Employee") && currentPageName !== "EmployeeProfile") || 
-      currentPageName === "LineCleaningDetail" || 
-      currentPageName === "PreOpInspection" ||
-      currentPageName === "RainDiverters";
 
     // Sanitation Manager pages - ONLY these should show the sanitation manager nav
     const isSanitationManagerPage = currentPageName === "ManagerDashboard" || 
@@ -337,10 +321,6 @@ export default function Layout({ children, currentPageName }) {
   
   // EmployeeProfile handles its own redirect if no `id` param is present
 
-  const navItems = [];
-
-
-
   return (
     <SessionTimeoutProvider timeoutMinutes={30} organizationId={layoutOrgId}>
     <div className={cn(
@@ -401,23 +381,7 @@ export default function Layout({ children, currentPageName }) {
                 </span>
               </div>
             ) : (isLoggedIn || isEmployeeMode) ? (
-              <div className="hidden md:flex items-center gap-1 flex-1">
-                {navItems.map(item => (
-                  <Link 
-                    key={item.href}
-                    to={createPageUrl(item.href)}
-                    className={cn(
-                      "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px]",
-                      currentPageName === item.href 
-                        ? "bg-slate-100 text-slate-900" 
-                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                    )}
-                  >
-                    <item.icon className="w-4 h-4" />
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
+              <div className="hidden md:flex items-center gap-1 flex-1" />
             ) : null}
 
             {/* Right side actions — never shrinks, always fully visible */}

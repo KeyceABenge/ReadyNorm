@@ -61,38 +61,17 @@ export default function ManagerLogin() {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    console.log("🔐 [ManagerLogin] Attempting sign in for:", email);
     
-    const { error: err, data } = await supabase.auth.signInWithPassword({ email, password });
+    const { error: err } = await supabase.auth.signInWithPassword({ email, password });
     
     if (err) {
       setLoading(false);
-      console.error("❌ [ManagerLogin] Sign in failed:", err.message);
       setError(err.message);
     } else {
-      console.log("✓ [ManagerLogin] Sign in successful, user:", data?.user?.email);
-      console.log("✓ [ManagerLogin] Session:", data?.session?.user?.email);
-      console.log("🔄 [ManagerLogin] Waiting for session to persist...");
-      
-      // Verify session was written to localStorage
-      const checkAuth = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          console.log("✓ [ManagerLogin] Session verified in localStorage:", session.user.email);
-        } else {
-          console.warn("⚠️ [ManagerLogin] Session not found in localStorage yet!");
-        }
-      };
-      
-      // Check immediately and again after 1.5s
-      await checkAuth();
-      setTimeout(checkAuth, 1500);
-      
-      // Wait for session to be fully persisted before redirecting
+      // Allow session to persist before redirect
       setTimeout(() => {
-        console.log("🔄 [ManagerLogin] Redirecting to:", nextUrl);
         window.location.href = nextUrl;
-      }, 2000);
+      }, 500);
     }
   };
 

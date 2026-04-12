@@ -166,7 +166,6 @@ export default function Home() {
                   isGroupOwner = ownedGroups.some(g => g.id === codeOrg.org_group_id);
                 }
                 if (!isCreator && !isGroupOwner) {
-                  console.log("[Home] Membership gate: no membership, not creator — clearing cache.");
                   code = null;
                   localStorage.removeItem('site_code');
                   localStorage.removeItem('organization_id');
@@ -174,7 +173,6 @@ export default function Home() {
                 }
               } else {
                 // Membership rows exist but none are active for this site → user left
-                console.log("[Home] Membership gate: user has left this site — clearing cache.");
                 code = null;
                 localStorage.removeItem('site_code');
                 localStorage.removeItem('organization_id');
@@ -223,7 +221,6 @@ export default function Home() {
                 if (accessible?.site_code) {
                   code = accessible.site_code;
                   localStorage.setItem('site_code', code);
-                  console.log("[Home] Path 1 (cached org_id) found code:", code);
                 }
               }
             } catch (e) { console.warn("[Home] Path 1 (cached org_id) failed:", e?.message); }
@@ -239,7 +236,6 @@ export default function Home() {
                 resolvedViaOwnership = true;
                 localStorage.setItem('site_code', code);
                 try { await updateCurrentUser({ organization_id: accessible.id }); } catch (_) {}
-                console.log("[Home] Path 2 (created_by email) found code:", code);
               }
             } catch (e) { console.warn("[Home] Path 2 (created_by) failed:", e?.message); }
           }
@@ -260,7 +256,6 @@ export default function Home() {
                   resolvedViaOwnership = true;
                   localStorage.setItem('site_code', code);
                   try { await updateCurrentUser({ organization_id: accessible.id }); } catch (_) {}
-                  console.log("[Home] Path 3 (org group owner) found code:", code);
                   break;
                 }
               }
@@ -282,7 +277,6 @@ export default function Home() {
                   code = reqOrgs[0].site_code;
                   localStorage.setItem('site_code', code);
                   try { await updateCurrentUser({ organization_id: reqOrgs[0].id }); } catch (_) {}
-                  console.log("[Home] Path 4 (access_requests) found code:", code);
                 }
               }
             } catch (e) { console.warn("[Home] Path 4 (access_requests) failed:", e?.message); }
@@ -305,7 +299,6 @@ export default function Home() {
                   }
                   localStorage.setItem('site_code', code);
                   try { await updateCurrentUser({ organization_id: groupSites[0].id }); } catch (_) {}
-                  console.log("[Home] Path 5 (membership) found code:", code);
                   break;
                 }
               }
@@ -353,7 +346,6 @@ export default function Home() {
               );
               
               if (isManager) {
-                console.log("✓ User is manager/owner - granting access");
                 setAccessStatus("approved");
                 localStorage.setItem("site_role", "manager");
                 setChosenRole("manager");

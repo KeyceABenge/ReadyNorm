@@ -78,20 +78,3 @@ export function getProxiedDownloadUrl(url, filename) {
   return mappedUrl;
 }
 
-export async function fetchProxiedImage(url) {
-  return getProxiedImageUrl(url) || "";
-}
-
-export const BRAND_LOGOS = {
-  sideways: "/readynorm-logo-sideways.svg",
-  main: "/readynorm-logo-main.svg",
-};
-
-export default {
-  getProxiedImageUrl,
-  getProxiedFileUrl,
-  getProxiedDownloadUrl,
-  fetchProxiedImage,
-  BRAND_LOGOS,
-  isExternalUrl,
-};
