@@ -22,6 +22,7 @@ import {
   CAPACommentRepo,
   CAPARepo
 } from "@/lib/adapters/database";
+import { sendEmail, invokeLLM } from "@/lib/adapters/integrations";
 
 const severityColors = {
   low: "bg-blue-100 text-blue-800",
