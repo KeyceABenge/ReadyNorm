@@ -1,0 +1,74 @@
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- Migration 023 — Add missing columns to controlled_documents
+-- ═══════════════════════════════════════════════════════════════════════════════
+--
+-- Root cause: The controlled_documents table was created with only basic columns
+-- (id, organization_id, title, document_number, document_type, description,
+-- file_url, status, category, effective_date, next_review_date, created_at,
+-- updated_at).  The Document Control UI and the Training Documents page write
+-- many additional columns that don't exist yet, causing database.js to strip
+-- them one-by-one on each retry (9 "Stripping unknown column" warnings).
+--
+-- This migration adds every column the code references that is not yet on the
+-- table.  It also includes the 3 columns from migration 020 (approvers, tags,
+-- training_document_id) since 020 has not been applied yet.
+--
+-- Safe to re-run: all statements use ADD COLUMN IF NOT EXISTS.
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Authorship & ownership
+-- ─────────────────────────────────────────────────────────────────────────────
+ALTER TABLE controlled_documents
+  ADD COLUMN IF NOT EXISTS author_email         TEXT,
+  ADD COLUMN IF NOT EXISTS author_name          TEXT;
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Document metadata
+-- ─────────────────────────────────────────────────────────────────────────────
+ALTER TABLE controlled_documents
+  ADD COLUMN IF NOT EXISTS department            TEXT,
+  ADD COLUMN IF NOT EXISTS confidentiality_level TEXT    DEFAULT 'internal',
+  ADD COLUMN IF NOT EXISTS current_version       TEXT    DEFAULT '1.0',
+  ADD COLUMN IF NOT EXISTS version               TEXT    DEFAULT '1.0',
+  ADD COLUMN IF NOT EXISTS file_name             TEXT;
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Review & training settings
+-- ─────────────────────────────────────────────────────────────────────────────
+ALTER TABLE controlled_documents
+  ADD COLUMN IF NOT EXISTS review_frequency_months  INTEGER DEFAULT 12,
+  ADD COLUMN IF NOT EXISTS requires_training        BOOLEAN DEFAULT false;
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Classification & search
+-- ─────────────────────────────────────────────────────────────────────────────
+ALTER TABLE controlled_documents
+  ADD COLUMN IF NOT EXISTS keywords               JSONB,
+  ADD COLUMN IF NOT EXISTS regulatory_references  JSONB,
+  ADD COLUMN IF NOT EXISTS tags                   JSONB;
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Approval workflow
+-- ─────────────────────────────────────────────────────────────────────────────
+ALTER TABLE controlled_documents
+  ADD COLUMN IF NOT EXISTS approvers              JSONB;
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Training document link (two-way relationship)
+-- ─────────────────────────────────────────────────────────────────────────────
+ALTER TABLE controlled_documents
+  ADD COLUMN IF NOT EXISTS training_document_id   UUID;
+
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- Done.  Run this in Supabase SQL Editor, then retry creating/editing a
+-- controlled document — the "Stripping unknown column" warnings should stop
+-- and all fields will be persisted correctly.
+-- ═══════════════════════════════════════════════════════════════════════════════
