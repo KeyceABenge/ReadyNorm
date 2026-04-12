@@ -1,6 +1,6 @@
 /**
  * INTEGRATIONS ADAPTER — Routes all AI/LLM/email/image operations through
- * backend functions (OpenAI + SendGrid). No Base44 dependency.
+ * backend functions (OpenAI + SendGrid). No dependency.
  *
  * Backend functions used:
  *   invokeLLM     — OpenAI GPT-4o-mini / GPT-4o
@@ -29,6 +29,12 @@ export async function invokeLLM(params) {
     file_urls: params.file_urls || null,
     model: params.model || null,
   });
+
+  // Check for error responses so callers' catch blocks fire
+  if (response.status >= 400 || response.data?.error) {
+    throw new Error(response.data?.error || `invokeLLM failed with status ${response.status}`);
+  }
+
   const data = response.data;
 
   // If schema was provided, the backend returns the parsed JSON directly

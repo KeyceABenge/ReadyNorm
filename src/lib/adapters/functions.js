@@ -7,14 +7,12 @@
  */
 import { supabase } from "@/api/supabaseClient";
 
-// Supabase project constants
-const SUPABASE_URL = "https://zamrusolomzustgenpin.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_p-ZZcpZzIqRW1dRNoHT69Q_l8l2XH3Q";
-
 /**
  * Invoke a backend function by name with a payload.
- * Uses raw fetch with the user's session JWT in Authorization
- * and the anon key in apikey header (required by the Supabase API gateway).
+ * Uses supabase.functions.invoke() which automatically handles:
+ *   - apikey header (anon key)
+ *   - Authorization header (user JWT from current session)
+ *   - Token refresh if needed
  *
  * @param {string} functionName - Name of the function (e.g. "listOrgUsers")
  * @param {object} [payload={}] - Request body
@@ -22,24 +20,18 @@ const SUPABASE_ANON_KEY = "sb_publishable_p-ZZcpZzIqRW1dRNoHT69Q_l8l2XH3Q";
  */
 export async function invokeFunction(functionName, payload = {}) {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
+    const { data, error } = await supabase.functions.invoke(functionName, {
+      body: payload,
+    });
 
-    const response = await fetch(
-      `${SUPABASE_URL}/functions/v1/${functionName}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_ANON_KEY,
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify(payload),
-      }
-    );
+    if (error) {
+      console.error(`[invokeFunction] ${functionName} error:`, error);
+      // FunctionsHttpError has a status, FunctionsRelayError / FunctionsFetchError do not
+      const status = error.context?.status || 500;
+      return { data: { error: error.message || String(error) }, status };
+    }
 
-    const data = await response.json();
-    return { data, status: response.status };
+    return { data, status: 200 };
   } catch (e) {
     console.error(`[invokeFunction] ${functionName} threw:`, e);
     return { data: { error: String(e?.message ?? e) }, status: 500 };
