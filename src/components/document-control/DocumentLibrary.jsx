@@ -45,7 +45,7 @@ const TYPE_CONFIG = {
 export default function DocumentLibrary({ documents, versions, organizationId, user, settings, onRefresh }) {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("effective");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
   const [showForm, setShowForm] = useState(false);
