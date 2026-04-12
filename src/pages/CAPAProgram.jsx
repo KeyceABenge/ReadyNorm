@@ -191,6 +191,7 @@ export default function CAPAProgram() {
           user={user}
           allCapas={capas}
           onUpdate={handleCapaUpdated}
+          onDelete={() => { setSelectedCapa(null); handleCapaUpdated(); }}
         />
       )}
     </div>

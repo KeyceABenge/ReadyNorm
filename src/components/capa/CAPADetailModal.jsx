@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle2, Clock, User, Calendar, AlertTriangle,
-  MessageSquare, Paperclip, Activity, Send, Check, RotateCcw, Loader2, Brain, Plus, Sparkles, Lightbulb, Pencil, Users
+  MessageSquare, Paperclip, Activity, Send, Check, RotateCcw, Loader2, Brain, Plus, Sparkles, Lightbulb, Pencil, Users, Trash2
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import CAPAIntelligence from "./CAPAIntelligence";
@@ -194,7 +194,7 @@ function CAPAActionForm({ capa, organization, user, onAdd }) {
   );
 }
 
-export default function CAPADetailModal({ open, onClose, capa, organization, user, onUpdate, allCapas = [] }) {
+export default function CAPADetailModal({ open, onClose, capa, organization, user, onUpdate, onDelete, allCapas = [] }) {
   const [activeTab, setActiveTab] = useState("summary");
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -208,6 +208,8 @@ export default function CAPADetailModal({ open, onClose, capa, organization, use
   const [editingAction, setEditingAction] = useState(null);
   const [showCloseModal, setShowCloseModal] = useState(false);
   const [closeData, setCloseData] = useState({ verification_method: "", effectiveness_criteria: "" });
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const queryClient = useQueryClient();
 
   // Auto-generate root cause when all 5 whys are answered
@@ -405,6 +407,32 @@ Focus on systemic issues, not individual blame. Be specific and actionable.`,
     }
   };
 
+  const deleteCapa = async () => {
+    setIsDeleting(true);
+    try {
+      // Delete related comments and actions first
+      const commentsToDelete = comments || [];
+      for (const c of commentsToDelete) {
+        try { await CAPACommentRepo.delete(c.id); } catch (_) {}
+      }
+      const actionsToDelete = actions || [];
+      for (const a of actionsToDelete) {
+        try { await CAPAActionRepo.delete(a.id); } catch (_) {}
+      }
+      await CAPARepo.delete(capa.id);
+      toast.success("CAPA deleted");
+      onClose();
+      if (onDelete) onDelete();
+      else onUpdate();
+    } catch (error) {
+      console.error("Failed to delete CAPA:", error);
+      toast.error("Failed to delete CAPA");
+    } finally {
+      setIsDeleting(false);
+      setConfirmDelete(false);
+    }
+  };
+
   const sendReminder = async (action) => {
     try {
       await sendEmail({
@@ -453,6 +481,37 @@ Please log in to complete this action.
                 </Badge>
               </div>
               <DialogTitle className="text-xl">{capa.title}</DialogTitle>
+            </div>
+            <div className="flex items-center gap-2">
+              {!confirmDelete ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => setConfirmDelete(true)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              ) : (
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={isDeleting}
+                    onClick={deleteCapa}
+                  >
+                    {isDeleting ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+                    Delete
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setConfirmDelete(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
           
