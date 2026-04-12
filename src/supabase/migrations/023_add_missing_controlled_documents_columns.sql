@@ -111,6 +111,27 @@ ALTER TABLE scheduled_audits
 
 
 -- ═══════════════════════════════════════════════════════════════════════════════
+-- GLASS_BRITTLE_ITEMS — columns written by GlassBrittleProgram
+-- ═══════════════════════════════════════════════════════════════════════════════
+ALTER TABLE glass_brittle_items
+  ADD COLUMN IF NOT EXISTS item_name              TEXT,
+  ADD COLUMN IF NOT EXISTS audit_frequency        TEXT    DEFAULT 'monthly',
+  ADD COLUMN IF NOT EXISTS status                 TEXT    DEFAULT 'active',
+  ADD COLUMN IF NOT EXISTS next_audit_due         DATE;
+
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- GLASS_BREAKAGE_INCIDENTS — columns written by GlassBrittleProgram
+-- ═══════════════════════════════════════════════════════════════════════════════
+ALTER TABLE glass_breakage_incidents
+  ADD COLUMN IF NOT EXISTS incident_date          DATE,
+  ADD COLUMN IF NOT EXISTS item_name              TEXT,
+  ADD COLUMN IF NOT EXISTS cleanup_verified       BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS all_pieces_accounted   BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS corrective_action      TEXT;
+
+
+-- ═══════════════════════════════════════════════════════════════════════════════
 -- Done.  Run this in Supabase SQL Editor, then retry creating/editing a
 -- controlled document — the "Stripping unknown column" warnings should stop
 -- and all fields will be persisted correctly.

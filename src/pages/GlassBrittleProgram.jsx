@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -31,19 +31,41 @@ export default function GlassBrittleProgram() {
   const queryClient = useQueryClient();
 
   const { data: items = [], isLoading: itemsLoading } = useQuery({ queryKey: ["glass_items", orgId], queryFn: () => GlassBrittleItemRepo.filter({ organization_id: orgId }), enabled: !!orgId, staleTime: 60000 });
-  const { data: incidents = [] } = useQuery({ queryKey: ["glass_incidents", orgId], queryFn: () => GlassBreakageIncidentRepo.filter({ organization_id: orgId }, "-incident_date"), enabled: !!orgId, staleTime: 60000 });
+  const { data: incidents = [] } = useQuery({ queryKey: ["glass_incidents", orgId], queryFn: () => GlassBreakageIncidentRepo.filter({ organization_id: orgId }, "-break_date"), enabled: !!orgId, staleTime: 60000 });
 
   const itemMutation = useMutation({
-    mutationFn: data => editingItem?.id ? GlassBrittleItemRepo.update(editingItem.id, data) : GlassBrittleItemRepo.create({ ...data, organization_id: orgId }),
+    mutationFn: data => {
+      const payload = {
+        ...data,
+        name: data.item_name || data.name,
+        item_name: data.item_name || data.name,
+        inspection_frequency: data.audit_frequency || data.inspection_frequency,
+        audit_frequency: data.audit_frequency || data.inspection_frequency,
+        is_active: data.status === "active" ? true : data.status === "inactive" ? false : data.is_active ?? true,
+        status: data.status || (data.is_active === false ? "inactive" : "active"),
+      };
+      return editingItem?.id ? GlassBrittleItemRepo.update(editingItem.id, payload) : GlassBrittleItemRepo.create({ ...payload, organization_id: orgId });
+    },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["glass_items"] }); setItemFormOpen(false); toast.success("Item saved"); }
   });
 
   const incidentMutation = useMutation({
-    mutationFn: data => editingIncident?.id ? GlassBreakageIncidentRepo.update(editingIncident.id, data) : GlassBreakageIncidentRepo.create({ ...data, organization_id: orgId }),
+    mutationFn: data => {
+      const payload = {
+        ...data,
+        break_date: data.incident_date || data.break_date || new Date().toISOString(),
+        incident_date: data.incident_date || data.break_date,
+        cleanup_completed: data.cleanup_verified ?? data.cleanup_completed ?? false,
+        cleanup_verified: data.cleanup_verified ?? data.cleanup_completed ?? false,
+        verification_done: data.all_pieces_accounted ?? data.verification_done ?? false,
+        all_pieces_accounted: data.all_pieces_accounted ?? data.verification_done ?? false,
+      };
+      return editingIncident?.id ? GlassBreakageIncidentRepo.update(editingIncident.id, payload) : GlassBreakageIncidentRepo.create({ ...payload, organization_id: orgId });
+    },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["glass_incidents"] }); setIncidentFormOpen(false); toast.success("Incident saved"); }
   });
 
-  const overdue = items.filter(i => i.status === "active" && i.next_audit_due && isPast(parseISO(i.next_audit_due)));
+  const overdue = items.filter(i => (i.status === "active" || i.is_active) && (i.next_audit_due || i.next_inspection_date) && isPast(parseISO(i.next_audit_due || i.next_inspection_date)));
   const openIncidents = incidents.filter(i => i.status !== "closed");
 
   if (orgLoading || itemsLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-slate-400" /></div>;
@@ -73,9 +95,9 @@ export default function GlassBrittleProgram() {
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-2 mb-1"><Badge variant="outline" className="text-xs capitalize">{item.item_type}</Badge><Badge className={cn("text-xs", item.condition === "good" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700")}>{item.condition}</Badge></div>
-                  <h3 className="font-semibold">{item.item_name}</h3>
+                  <h3 className="font-semibold">{item.item_name || item.name}</h3>
                   <p className="text-xs text-slate-500">{item.location}</p>
-                  {item.next_audit_due && <p className={cn("text-xs mt-1", isPast(parseISO(item.next_audit_due)) ? "text-rose-600 font-medium" : "text-slate-400")}>Audit due: {format(parseISO(item.next_audit_due), "MMM d, yyyy")}</p>}
+                  {(item.next_audit_due || item.next_inspection_date) && <p className={cn("text-xs mt-1", isPast(parseISO(item.next_audit_due || item.next_inspection_date)) ? "text-rose-600 font-medium" : "text-slate-400")}>Audit due: {format(parseISO(item.next_audit_due || item.next_inspection_date), "MMM d, yyyy")}</p>}
                 </div>
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingItem(item); setItemForm(item); setItemFormOpen(true); }}><Pencil className="w-3.5 h-3.5" /></Button>
               </div>
@@ -89,9 +111,9 @@ export default function GlassBrittleProgram() {
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-2 mb-1"><Badge className={inc.status === "closed" ? "bg-slate-100 text-slate-600" : "bg-rose-100 text-rose-700"}>{inc.status}</Badge>{inc.product_affected && <Badge className="bg-rose-600 text-white text-xs">Product Affected</Badge>}</div>
-                  <h3 className="font-semibold">{inc.item_name || "Unknown item"}</h3>
+                  <h3 className="font-semibold">{inc.item_name || inc.glass_item_type || "Unknown item"}</h3>
                   <p className="text-sm text-slate-500">{inc.description}</p>
-                  <p className="text-xs text-slate-400 mt-1">{inc.location} — {inc.incident_date && format(parseISO(inc.incident_date), "MMM d, yyyy")}</p>
+                  <p className="text-xs text-slate-400 mt-1">{inc.location} — {(inc.incident_date || inc.break_date) && format(parseISO(inc.incident_date || inc.break_date), "MMM d, yyyy")}</p>
                 </div>
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingIncident(inc); setIncidentForm(inc); setIncidentFormOpen(true); }}><Pencil className="w-3.5 h-3.5" /></Button>
               </div>
@@ -103,7 +125,7 @@ export default function GlassBrittleProgram() {
 
       {/* Item Modal */}
       <Dialog open={itemFormOpen} onOpenChange={setItemFormOpen}>
-        <DialogContent><DialogHeader><DialogTitle>{editingItem ? "Edit" : "Add"} Item</DialogTitle></DialogHeader>
+        <DialogContent><DialogHeader><DialogTitle>{editingItem ? "Edit" : "Add"} Item</DialogTitle><DialogDescription className="sr-only">Glass or brittle plastic item form</DialogDescription></DialogHeader>
           <div className="space-y-3">
             <div><Label>Item Name *</Label><Input value={itemForm.item_name || ""} onChange={e => setItemForm(p => ({ ...p, item_name: e.target.value }))} /></div>
             <div><Label>Location *</Label><Input value={itemForm.location || ""} onChange={e => setItemForm(p => ({ ...p, location: e.target.value }))} /></div>
@@ -119,7 +141,7 @@ export default function GlassBrittleProgram() {
 
       {/* Incident Modal */}
       <Dialog open={incidentFormOpen} onOpenChange={setIncidentFormOpen}>
-        <DialogContent><DialogHeader><DialogTitle>{editingIncident ? "Edit" : "Report"} Breakage Incident</DialogTitle></DialogHeader>
+        <DialogContent><DialogHeader><DialogTitle>{editingIncident ? "Edit" : "Report"} Breakage Incident</DialogTitle><DialogDescription className="sr-only">Breakage incident form</DialogDescription></DialogHeader>
           <div className="space-y-3">
             <div><Label>Location *</Label><Input value={incidentForm.location || ""} onChange={e => setIncidentForm(p => ({ ...p, location: e.target.value }))} /></div>
             <div><Label>Description *</Label><Textarea value={incidentForm.description || ""} onChange={e => setIncidentForm(p => ({ ...p, description: e.target.value }))} rows={2} /></div>
