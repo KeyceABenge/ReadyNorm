@@ -129,38 +129,50 @@ export default function StandardUploadModal({ open, onClose, organization, exist
 
       const result = response?.output || response;
 
+      console.log("[parseStandard] Sections found:", result?.sections?.length, "| Total requirements:", result?.sections?.reduce((sum, s) => sum + (s.requirements?.length || 0), 0));
+
       if (result?.sections && result.sections.length > 0) {
         let sectionOrder = 0;
         let totalReqs = 0;
 
         for (const section of result.sections) {
-          const createdSection = await AuditSectionRepo.create({
-            organization_id: organization.id,
-            standard_id: standard.id,
-            standard_name: standard.name,
-            section_number: section.section_number || `${sectionOrder + 1}`,
-            title: section.title,
-            description: section.description,
-            sort_order: sectionOrder++,
-            status: "active"
-          });
+          let createdSection;
+          try {
+            createdSection = await AuditSectionRepo.create({
+              organization_id: organization.id,
+              standard_id: standard.id,
+              standard_name: standard.name,
+              section_number: section.section_number || `${sectionOrder + 1}`,
+              title: section.title,
+              description: section.description || section.title,
+              sort_order: sectionOrder++,
+              status: "active"
+            });
+          } catch (secErr) {
+            console.warn(`[parseStandard] Failed to save section ${section.section_number}:`, secErr.message);
+            continue; // skip to next section
+          }
 
           if (section.requirements) {
             let reqOrder = 0;
             for (const req of section.requirements) {
-              await AuditRequirementRepo.create({
-                organization_id: organization.id,
-                standard_id: standard.id,
-                section_id: createdSection.id,
-                section_number: section.section_number,
-                requirement_number: req.requirement_number || `${section.section_number}.${reqOrder + 1}`,
-                text: req.text,
-                guidance_notes: req.guidance_notes,
-                is_critical: req.is_critical || false,
-                sort_order: reqOrder++,
-                status: "active"
-              });
-              totalReqs++;
+              try {
+                await AuditRequirementRepo.create({
+                  organization_id: organization.id,
+                  standard_id: standard.id,
+                  section_id: createdSection.id,
+                  requirement_number: req.requirement_number || `${section.section_number}.${reqOrder + 1}`,
+                  description: req.text || "No description",
+                  text: req.text,
+                  guidance_notes: req.guidance_notes,
+                  is_critical: req.is_critical || false,
+                  sort_order: reqOrder++,
+                  status: "active"
+                });
+                totalReqs++;
+              } catch (reqErr) {
+                console.warn(`[parseStandard] Failed to save requirement ${req.requirement_number}:`, reqErr.message);
+              }
             }
           }
         }
