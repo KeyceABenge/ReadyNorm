@@ -90,27 +90,26 @@ export default function StandardUploadModal({ open, onClose, organization, exist
         file_url: fileUrl,
         json_schema: {
           type: "object",
-          description: `Analyze this audit standard document ("${standard.name}", type: ${standard.type}) and extract ALL sections and their requirements. Be thorough — extract every section and every individual requirement from the entire document. For each section, identify the section number/code, title, description, and all requirements within it. For each requirement, identify the requirement number, full text, whether it is critical/mandatory, and any guidance notes.`,
+          description: `Extract the COMPLETE structure of this audit standard document ("${standard.name}"). This document likely has 10-25+ major sections. You MUST extract ALL sections — do NOT stop early. Prioritize COMPLETENESS over detail. Keep text fields SHORT (one sentence max). Do NOT include full paragraph text — just a brief summary of each requirement.`,
           properties: {
             sections: {
               type: "array",
-              description: "All sections from the audit standard document",
+              description: "Every section in the standard — extract ALL, not just the first few",
               items: {
                 type: "object",
                 properties: {
-                  section_number: { type: "string", description: "Section number/code (e.g., '2.1', '3.2.1')" },
-                  title: { type: "string", description: "Section title" },
-                  description: { type: "string", description: "Brief description of the section scope" },
+                  section_number: { type: "string", description: "Section number (e.g. '2.1', '11.2')" },
+                  title: { type: "string", description: "Section title (brief)" },
+                  description: { type: "string", description: "One-sentence scope description" },
                   requirements: {
                     type: "array",
-                    description: "All individual requirements within this section",
+                    description: "Requirements in this section",
                     items: {
                       type: "object",
                       properties: {
-                        requirement_number: { type: "string", description: "Requirement number/code" },
-                        text: { type: "string", description: "Full requirement text" },
-                        is_critical: { type: "boolean", description: "True if this is a critical, mandatory, or fundamental requirement" },
-                        guidance_notes: { type: "string", description: "Guidance notes or interpretation help" }
+                        requirement_number: { type: "string", description: "Clause number (e.g. '2.1.1.1')" },
+                        text: { type: "string", description: "One-sentence summary of the requirement (NOT full text)" },
+                        is_critical: { type: "boolean", description: "True if mandatory/critical/fundamental" }
                       }
                     }
                   }
