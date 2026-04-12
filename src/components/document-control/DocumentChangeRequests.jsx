@@ -155,11 +155,18 @@ export default function DocumentChangeRequests({ changeRequests, documents, trai
 
         const doc = documents.find(d => d.id === respondingCR.document_id);
         if (doc) {
+          const todayStr = new Date().toISOString().split("T")[0];
+          const reviewMonths = doc.review_frequency_months || 12;
+          const nextReview = new Date();
+          nextReview.setMonth(nextReview.getMonth() + reviewMonths);
+
           const updateData = {
             current_version: newVersion || doc.current_version,
             version: newVersion || doc.version,
             status: "effective",
             change_summary: changeSummary || respondingCR.description,
+            effective_date: todayStr,
+            next_review_date: nextReview.toISOString().split("T")[0],
           };
           if (fileUrl) updateData.file_url = fileUrl;
           if (revisionFile) updateData.file_name = revisionFile.name;

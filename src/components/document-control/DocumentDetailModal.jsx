@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,8 +19,12 @@ const STATUS_CONFIG = {
   obsolete: { label: "Obsolete", color: "bg-rose-100 text-rose-700" }
 };
 
-export default function DocumentDetailModal({ open, onOpenChange, document, versions, onRefresh }) {
-  const [activeTab, setActiveTab] = useState("details");
+export default function DocumentDetailModal({ open, onOpenChange, document, versions, initialTab, onRefresh }) {
+  const [activeTab, setActiveTab] = useState(initialTab || "details");
+
+  useEffect(() => {
+    if (initialTab) setActiveTab(initialTab);
+  }, [initialTab, document]);
   
   if (!document) return null;
 
@@ -155,11 +159,11 @@ export default function DocumentDetailModal({ open, onOpenChange, document, vers
               {versions.length === 0 ? (
                 <p className="text-center py-8 text-slate-500">No version history available</p>
               ) : (
-                versions.sort((a, b) => b.version.localeCompare(a.version)).map(ver => (
+                versions.sort((a, b) => (b.version_number || b.version || "").localeCompare(a.version_number || a.version || "")).map(ver => (
                   <div key={ver.id} className="bg-slate-50 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline">v{ver.version}</Badge>
+                        <Badge variant="outline">v{ver.version_number || ver.version}</Badge>
                         <Badge className={STATUS_CONFIG[ver.status]?.color || "bg-slate-100"}>
                           {STATUS_CONFIG[ver.status]?.label || ver.status}
                         </Badge>
@@ -174,7 +178,7 @@ export default function DocumentDetailModal({ open, onOpenChange, document, vers
                       <p className="text-sm text-slate-700 mt-2">{ver.change_summary}</p>
                     )}
                     <p className="text-xs text-slate-400 mt-2">
-                      By {ver.author_name || "Unknown"} • {format(new Date(ver.created_date), "MMM d, yyyy h:mm a")}
+                      By {ver.created_by_name || ver.author_name || "Unknown"} • {ver.created_date ? format(new Date(ver.created_date), "MMM d, yyyy h:mm a") : "-"}
                     </p>
                   </div>
                 ))

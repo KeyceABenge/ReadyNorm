@@ -51,6 +51,7 @@ export default function DocumentLibrary({ documents, versions, organizationId, u
   const [showForm, setShowForm] = useState(false);
   const [editingDoc, setEditingDoc] = useState(null);
   const [viewingDoc, setViewingDoc] = useState(null);
+  const [initialTab, setInitialTab] = useState("details");
 
   // Get unique categories
   const categories = [...new Set(documents.map(d => d.category).filter(Boolean))];
@@ -212,7 +213,7 @@ export default function DocumentLibrary({ documents, versions, organizationId, u
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setViewingDoc(doc)}>
+                          <DropdownMenuItem onClick={() => { setInitialTab("details"); setViewingDoc(doc); }}>
                             <Eye className="w-4 h-4 mr-2" />
                             View Details
                           </DropdownMenuItem>
@@ -227,7 +228,7 @@ export default function DocumentLibrary({ documents, versions, organizationId, u
                             <Edit className="w-4 h-4 mr-2" />
                             Edit
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { setInitialTab("history"); setViewingDoc(doc); }}>
                             <History className="w-4 h-4 mr-2" />
                             Version History
                           </DropdownMenuItem>
@@ -265,6 +266,7 @@ export default function DocumentLibrary({ documents, versions, organizationId, u
           onOpenChange={() => setViewingDoc(null)}
           document={viewingDoc}
           versions={versions.filter(v => v.document_id === viewingDoc.id)}
+          initialTab={initialTab}
           onRefresh={onRefresh}
         />
       )}
