@@ -29,7 +29,7 @@ const PRIORITY_CONFIG = {
   urgent: { label: "Urgent", color: "bg-rose-100 text-rose-600" }
 };
 
-export default function DocumentChangeRequests({ changeRequests, documents, organizationId, user, settings, onRefresh }) {
+export default function DocumentChangeRequests({ changeRequests, documents, trainingDocuments = [], organizationId, user, settings, onRefresh }) {
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingCR, setEditingCR] = useState(null);
@@ -153,6 +153,7 @@ export default function DocumentChangeRequests({ changeRequests, documents, orga
           onOpenChange={setShowForm}
           changeRequest={editingCR}
           documents={documents}
+          trainingDocuments={trainingDocuments}
           organizationId={organizationId}
           user={user}
           onSaved={() => { setShowForm(false); onRefresh(); }}

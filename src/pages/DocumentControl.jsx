@@ -12,6 +12,7 @@ import {
   EmployeeRepo,
   OrganizationRepo,
   SiteSettingsRepo,
+  TrainingDocumentRepo,
   TrainingRecordRepo
 } from "@/lib/adapters/database";
 import { useQuery } from "@tanstack/react-query";
@@ -78,6 +79,12 @@ export default function DocumentControl() {
   const { data: employees = [] } = useQuery({
     queryKey: ["employees_doc", organizationId],
     queryFn: () => EmployeeRepo.filter({ organization_id: organizationId, status: "active" }),
+    enabled: !!organizationId
+  });
+
+  const { data: trainingDocuments = [] } = useQuery({
+    queryKey: ["training_documents_for_doccontrol", organizationId],
+    queryFn: () => TrainingDocumentRepo.filter({ organization_id: organizationId }),
     enabled: !!organizationId
   });
 
@@ -221,6 +228,7 @@ export default function DocumentControl() {
             <DocumentChangeRequests
               changeRequests={changeRequests}
               documents={documents}
+              trainingDocuments={trainingDocuments}
               organizationId={organizationId}
               user={user}
               settings={settings[0]}

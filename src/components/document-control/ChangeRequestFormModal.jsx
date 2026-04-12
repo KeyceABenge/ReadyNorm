@@ -6,12 +6,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Loader2 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Loader2, ChevronsUpDown, Check } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { DocumentChangeRequestRepo } from "@/lib/adapters/database";
 
-export default function ChangeRequestFormModal({ open, onOpenChange, changeRequest, documents, organizationId, user, onSaved }) {
+export default function ChangeRequestFormModal({ open, onOpenChange, changeRequest, documents, trainingDocuments = [], organizationId, user, onSaved }) {
   const [saving, setSaving] = useState(false);
+  const [docPickerOpen, setDocPickerOpen] = useState(false);
   const [form, setForm] = useState({
     document_id: changeRequest?.document_id || "",
     request_type: changeRequest?.request_type || "revision",
@@ -27,6 +31,31 @@ export default function ChangeRequestFormModal({ open, onOpenChange, changeReque
   });
 
   const selectedDoc = documents.find(d => d.id === form.document_id);
+  const selectedTrainingDoc = !selectedDoc ? trainingDocuments.find(d => d.id === form.document_id) : null;
+  const selectedAny = selectedDoc || selectedTrainingDoc;
+
+  // Build a unified list: controlled docs + training docs not already linked
+  const linkedControlledIds = new Set(documents.filter(d => d.training_document_id).map(d => d.training_document_id));
+  const unlinkedTrainingDocs = trainingDocuments.filter(td => !linkedControlledIds.has(td.id));
+
+  const allDocOptions = [
+    ...documents.map(d => ({
+      id: d.id,
+      label: `${d.document_number ? d.document_number + " - " : ""}${d.title}`,
+      title: d.title,
+      document_number: d.document_number,
+      source: "controlled",
+      status: d.status,
+    })),
+    ...unlinkedTrainingDocs.map(d => ({
+      id: d.id,
+      label: `[Training] ${d.title}`,
+      title: d.title,
+      document_number: null,
+      source: "training",
+      status: d.status || "active",
+    })),
+  ];
 
   const generateRequestNumber = () => {
     const year = new Date().getFullYear();
@@ -48,7 +77,7 @@ export default function ChangeRequestFormModal({ open, onOpenChange, changeReque
         request_number: changeRequest?.request_number || generateRequestNumber(),
         document_id: form.document_id || null,
         document_number: selectedDoc?.document_number || null,
-        document_title: selectedDoc?.title || null,
+        document_title: selectedAny?.title || null,
         request_type: form.request_type,
         priority: form.priority,
         description: form.description,
@@ -123,18 +152,65 @@ export default function ChangeRequestFormModal({ open, onOpenChange, changeReque
           {form.request_type !== "new_document" && (
             <div>
               <Label>Document to Change</Label>
-              <Select value={form.document_id} onValueChange={(v) => setForm(prev => ({ ...prev, document_id: v }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select document" />
-                </SelectTrigger>
-                <SelectContent>
-                  {documents.filter(d => d.status === "effective").map(doc => (
-                    <SelectItem key={doc.id} value={doc.id}>
-                      {doc.document_number} - {doc.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={docPickerOpen} onOpenChange={setDocPickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={docPickerOpen}
+                    className="w-full justify-between font-normal h-10 text-left"
+                  >
+                    <span className="truncate">
+                      {form.document_id
+                        ? allDocOptions.find(o => o.id === form.document_id)?.label || "Select document"
+                        : "Select document..."}
+                    </span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Search documents..." />
+                    <CommandList>
+                      <CommandEmpty>No documents found.</CommandEmpty>
+                      {documents.length > 0 && (
+                        <CommandGroup heading="Controlled Documents">
+                          {allDocOptions.filter(o => o.source === "controlled").map(opt => (
+                            <CommandItem
+                              key={opt.id}
+                              value={opt.label}
+                              onSelect={() => {
+                                setForm(prev => ({ ...prev, document_id: opt.id }));
+                                setDocPickerOpen(false);
+                              }}
+                            >
+                              <Check className={cn("mr-2 h-4 w-4", form.document_id === opt.id ? "opacity-100" : "opacity-0")} />
+                              <span className="truncate">{opt.label}</span>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      )}
+                      {unlinkedTrainingDocs.length > 0 && (
+                        <CommandGroup heading="Training Documents">
+                          {allDocOptions.filter(o => o.source === "training").map(opt => (
+                            <CommandItem
+                              key={opt.id}
+                              value={opt.label}
+                              onSelect={() => {
+                                setForm(prev => ({ ...prev, document_id: opt.id }));
+                                setDocPickerOpen(false);
+                              }}
+                            >
+                              <Check className={cn("mr-2 h-4 w-4", form.document_id === opt.id ? "opacity-100" : "opacity-0")} />
+                              <span className="truncate">{opt.label}</span>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      )}
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
           )}
 
