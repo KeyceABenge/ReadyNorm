@@ -67,6 +67,7 @@ export default function StandardUploadModal({ open, onClose, organization, exist
       // If file uploaded, parse it with AI
       if (fileUrl) {
         setIsParsing(true);
+        toast.info("Extracting sections from document — this may take a minute...");
         await parseStandardDocument(standard, fileUrl);
       }
 
@@ -74,7 +75,7 @@ export default function StandardUploadModal({ open, onClose, organization, exist
       onSuccess();
     } catch (error) {
       console.error("Error creating standard:", error);
-      toast.error("Failed to create standard");
+      toast.error("Failed to create standard: " + (error.message || "Unknown error"));
     } finally {
       setIsUploading(false);
       setIsParsing(false);
@@ -131,7 +132,7 @@ Be thorough and extract ALL sections and requirements from the document.`,
         }
       });
 
-      if (result?.sections) {
+      if (result?.sections && result.sections.length > 0) {
         let sectionOrder = 0;
         let totalReqs = 0;
 
@@ -173,12 +174,23 @@ Be thorough and extract ALL sections and requirements from the document.`,
           total_requirements: totalReqs,
           parsing_status: "completed"
         });
+
+        toast.success(`Extracted ${result.sections.length} sections and ${totalReqs} requirements`);
+      } else {
+        console.warn("AI returned no sections:", result);
+        toast.warning("Document uploaded but no sections were extracted. You can add sections manually.");
+        await AuditStandardRepo.update(standard.id, {
+          parsing_status: "completed"
+        });
       }
     } catch (error) {
       console.error("Error parsing document:", error);
-      await AuditStandardRepo.update(standard.id, {
-        parsing_status: "failed"
-      });
+      toast.error("AI parsing failed — you can add sections manually. Error: " + (error.message || "Unknown"));
+      try {
+        await AuditStandardRepo.update(standard.id, {
+          parsing_status: "failed"
+        });
+      } catch (_) { /* ignore update failure */ }
     }
   };
 
