@@ -29,7 +29,18 @@ export default function DocumentDetailModal({ open, onOpenChange, document, vers
   if (!document) return null;
 
   const statusConfig = STATUS_CONFIG[document.status] || STATUS_CONFIG.draft;
-  const isOverdue = document.next_review_date && new Date(document.next_review_date) < new Date();
+
+  // Compute next review: use stored value, or derive from effective_date + frequency
+  const computedNextReview = (() => {
+    if (document.next_review_date) return document.next_review_date;
+    if (document.effective_date) {
+      const eff = new Date(document.effective_date);
+      eff.setMonth(eff.getMonth() + (document.review_frequency_months || 12));
+      return eff.toISOString().split("T")[0];
+    }
+    return null;
+  })();
+  const isOverdue = computedNextReview && new Date(computedNextReview) < new Date();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -106,7 +117,7 @@ export default function DocumentDetailModal({ open, onOpenChange, document, vers
                   <span className="text-slate-500">Next Review:</span>
                   <span className={`font-medium ${isOverdue ? "text-rose-600" : ""}`}>
                     {isOverdue && <AlertTriangle className="w-3 h-3 inline mr-1" />}
-                    {document.next_review_date ? format(new Date(document.next_review_date), "MMM d, yyyy") : "-"}
+                    {computedNextReview ? format(new Date(computedNextReview), "MMM d, yyyy") : "-"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">

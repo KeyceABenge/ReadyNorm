@@ -73,6 +73,18 @@ export default function DocumentLibrary({ documents, versions, organizationId, u
 
   const isOverdue = (doc) => doc.next_review_date && new Date(doc.next_review_date) < new Date();
 
+  // Compute next review date: use stored value, or derive from effective_date + frequency
+  const getNextReviewDate = (doc) => {
+    if (doc.next_review_date) return doc.next_review_date;
+    if (doc.effective_date) {
+      const eff = new Date(doc.effective_date);
+      const months = doc.review_frequency_months || 12;
+      eff.setMonth(eff.getMonth() + months);
+      return eff.toISOString().split("T")[0];
+    }
+    return null;
+  };
+
   return (
     <div className="space-y-4">
       {/* Toolbar */}
@@ -198,12 +210,17 @@ export default function DocumentLibrary({ documents, versions, organizationId, u
                       {doc.effective_date ? format(new Date(doc.effective_date), "MMM d, yyyy") : "-"}
                     </td>
                     <td className="px-4 py-3">
-                      {doc.next_review_date ? (
-                        <span className={`text-sm ${overdue ? "text-rose-600 font-medium" : "text-slate-600"}`}>
-                          {overdue && <AlertTriangle className="w-3 h-3 inline mr-1" />}
-                          {format(new Date(doc.next_review_date), "MMM d, yyyy")}
-                        </span>
-                      ) : "-"}
+                      {(() => {
+                        const reviewDate = getNextReviewDate(doc);
+                        if (!reviewDate) return "-";
+                        const isLate = new Date(reviewDate) < new Date();
+                        return (
+                          <span className={`text-sm ${isLate ? "text-rose-600 font-medium" : "text-slate-600"}`}>
+                            {isLate && <AlertTriangle className="w-3 h-3 inline mr-1" />}
+                            {format(new Date(reviewDate), "MMM d, yyyy")}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <DropdownMenu>

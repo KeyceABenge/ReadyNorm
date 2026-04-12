@@ -67,6 +67,14 @@ ALTER TABLE controlled_documents
   ADD COLUMN IF NOT EXISTS training_document_id   UUID;
 
 
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Change tracking (used by CR completion and version history)
+-- ─────────────────────────────────────────────────────────────────────────────
+ALTER TABLE controlled_documents
+  ADD COLUMN IF NOT EXISTS change_summary         TEXT,
+  ADD COLUMN IF NOT EXISTS change_rationale        TEXT;
+
+
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- Done.  Run this in Supabase SQL Editor, then retry creating/editing a
 -- controlled document — the "Stripping unknown column" warnings should stop
