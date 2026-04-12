@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -299,15 +299,15 @@ Focus on systemic issues, not individual blame. Be specific and actionable.`,
   }, [capa]);
 
   const { data: actions = [], refetch: refetchActions } = useQuery({
-    queryKey: ["capa_actions", capa?.id],
-    queryFn: () => CAPAActionRepo.filter({ capa_id: capa.id }),
-    enabled: !!capa?.id,
+    queryKey: ["capa_actions", capa?.id, organization?.id],
+    queryFn: () => CAPAActionRepo.filter({ capa_id: capa.id, organization_id: organization.id }),
+    enabled: !!capa?.id && !!organization?.id,
   });
 
   const { data: comments = [], refetch: refetchComments } = useQuery({
-    queryKey: ["capa_comments", capa?.id],
-    queryFn: () => CAPACommentRepo.filter({ capa_id: capa.id }),
-    enabled: !!capa?.id,
+    queryKey: ["capa_comments", capa?.id, organization?.id],
+    queryFn: () => CAPACommentRepo.filter({ capa_id: capa.id, organization_id: organization.id }),
+    enabled: !!capa?.id && !!organization?.id,
   });
 
   const daysOpen = capa ? differenceInDays(new Date(), new Date(capa.created_date)) : 0;
@@ -435,31 +435,32 @@ Focus on systemic issues, not individual blame. Be specific and actionable.`,
   };
 
   const sendReminder = async (action) => {
+    if (!action.owner_email) {
+      toast.error("No email address for this action owner");
+      return;
+    }
     try {
       await sendEmail({
         to: action.owner_email,
         subject: `[Reminder] CAPA Action Due: ${action.title}`,
-        body: `
-This is a reminder that you have a CAPA action item due.
-
-CAPA: ${capa.capa_id} - ${capa.title}
-Action: ${action.title}
-Due Date: ${action.due_date}
-Status: ${action.status}
-
-Please log in to complete this action.
-        `.trim()
+        body: `<p>This is a reminder that you have a CAPA action item due.</p>
+<p><strong>CAPA:</strong> ${capa.capa_id} - ${capa.title}<br/>
+<strong>Action:</strong> ${action.title}<br/>
+<strong>Due Date:</strong> ${action.due_date || "Not set"}<br/>
+<strong>Status:</strong> ${action.status}</p>
+<p>Please log in to complete this action.</p>`,
+        from_name: "ReadyNorm CAPA"
       });
       
       await CAPAActionRepo.update(action.id, {
-        reminder_sent_at: new Date().toISOString(),
         reminders_sent: (action.reminders_sent || 0) + 1
       });
       
-      toast.success("Reminder sent");
+      toast.success("Reminder sent to " + action.owner_email);
       refetchActions();
     } catch (error) {
-      toast.error("Failed to send reminder");
+      console.error("sendReminder error:", error);
+      toast.error("Failed to send reminder: " + (error.message || "Unknown error"));
     }
   };
 
@@ -482,6 +483,7 @@ Please log in to complete this action.
                 </Badge>
               </div>
               <DialogTitle className="text-xl">{capa.title}</DialogTitle>
+              <DialogDescription className="sr-only">CAPA detail view for {capa.capa_id}</DialogDescription>
             </div>
             <div className="flex items-center gap-2">
               {!confirmDelete ? (
@@ -1473,6 +1475,7 @@ Focus on systemic improvements, training, process changes, and verification meas
             <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>Close CAPA</DialogTitle>
+                <DialogDescription>Provide verification details to close this CAPA.</DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div>
