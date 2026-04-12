@@ -140,7 +140,7 @@ export default function AuditDashboard({
       <p>If you have any questions or need to reschedule, please contact your audit program coordinator.</p>
     </div>
     <div class="footer">
-      <p>${organization?.name || 'Internal Audit Program'}</p>
+      <p>${organization?.site_name || organization?.name || 'Internal Audit Program'}</p>
       <p style="margin-top: 8px; font-size: 12px;">This is an automated reminder from your audit management system.</p>
     </div>
   </div>
@@ -240,7 +240,7 @@ export default function AuditDashboard({
       <p>Overdue audits impact our compliance program and may result in audit findings during external audits. Please prioritize completing this audit.</p>
     </div>
     <div class="footer">
-      <p>${organization?.name || 'Internal Audit Program'}</p>
+      <p>${organization?.site_name || organization?.name || 'Internal Audit Program'}</p>
       <p style="margin-top: 8px; font-size: 12px;">This is an automated reminder from your audit management system.</p>
     </div>
   </div>

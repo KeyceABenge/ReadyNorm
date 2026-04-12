@@ -298,7 +298,7 @@ export default function PestControlPage() {
               organizationId={organizationId}
               mapImageUrl={defaultMap?.image_url}
               onRefresh={handleRefresh}
-              organizationName={organization?.name}
+              organizationName={organization?.site_name || organization?.name}
             />
           </TabsContent>
 

@@ -61,7 +61,7 @@ export default function EmployeeLanding({ organization, siteCode, settings, onCh
             ) : settings?.logo_url ? (
               <ProxiedImage src={settings.logo_url} alt="" className="h-6 w-auto" />
             ) : null}
-            <span className="text-sm font-semibold text-slate-900">{organization?.name || "ReadyNorm"}</span>
+            <span className="text-sm font-semibold text-slate-900">{organization?.site_name || organization?.name || "ReadyNorm"}</span>
           </div>
 
           {siteCode && (

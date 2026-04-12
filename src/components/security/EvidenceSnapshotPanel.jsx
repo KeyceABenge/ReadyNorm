@@ -33,7 +33,7 @@ export default function EvidenceSnapshotPanel({ organizationId, organization, se
     try {
       const snapshot = {
         captured_at: new Date().toISOString(),
-        organization_name: organization?.name,
+        organization_name: organization?.site_name || organization?.name,
         site_code: organization?.site_code,
         passcode_enabled: !!organization?.manager_passcode,
         rls_active: true,

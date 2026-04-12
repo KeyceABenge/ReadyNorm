@@ -226,7 +226,7 @@ export default function GeneralSiteSettings() {
               Site Settings
             </h1>
             <p className="text-slate-500 text-sm mt-0.5">
-              General configuration for {organization?.name || "your site"}
+              General configuration for {organization?.site_name || organization?.name || "your site"}
             </p>
           </div>
         </div>
@@ -400,7 +400,7 @@ export default function GeneralSiteSettings() {
           <TabsContent value="danger" className="space-y-6">
             <TransferOwnershipPanel
               organizationId={orgId}
-              organizationName={organization?.name}
+              organizationName={organization?.site_name || organization?.name}
               currentUserEmail={user?.email}
             />
             <Card className="border-2 border-rose-200 bg-gradient-to-br from-rose-50 to-white">
@@ -440,7 +440,7 @@ export default function GeneralSiteSettings() {
                             <div className="space-y-4">
                               <p>
                                 This will <strong>permanently delete</strong> your organization{" "}
-                                <strong>{organization?.name}</strong> and all associated data.
+                                <strong>{organization?.site_name || organization?.name}</strong> and all associated data.
                               </p>
                               <div className="bg-rose-50 border border-rose-200 rounded-lg p-3">
                                 <p className="text-xs font-medium text-rose-800 mb-2">Data that will be deleted:</p>
