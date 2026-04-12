@@ -10,9 +10,9 @@
 --   and no org_group_membership rows were ever created for them.
 --
 --   IMPORTANT TYPE NOTE:
---   organization_groups.id is a TEXT Base44/hex ObjectId (24-char hex string).
+--   organization_groups.id is a TEXT /hex ObjectId (24-char hex string).
 --   organizations.org_group_id is a UUID column.
---   These types are INCOMPATIBLE — you cannot cast a Base44 ID to UUID.
+--   These types are INCOMPATIBLE — you cannot cast a  ID to UUID.
 --   Therefore we NEVER try to SET org_group_id = og.id::uuid.
 --   Instead, we find the org_group via the owner's existing membership row
 --   (org_group_memberships.org_group_id is TEXT and matches org_group.id).

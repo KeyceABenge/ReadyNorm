@@ -180,8 +180,8 @@ Write ONE sentence (max 30 words) that is direct, actionable. ${isMultiSite ? "M
     );
   }
 
-  // If loading finished but no data, show a message instead of infinite spinner
-  if (!periodAllMetrics) {
+  // If loading finished but no data or there was an error
+  if (loadError || !periodAllMetrics) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-orange-50 p-4 md:p-6">
         <div className="max-w-7xl mx-auto">
@@ -195,7 +195,15 @@ Write ONE sentence (max 30 words) that is direct, actionable. ${isMultiSite ? "M
             <h1 className="text-lg font-semibold text-slate-900">Executive Command Center</h1>
           </div>
           <Card><CardContent className="py-12 text-center">
-            <p className="text-slate-500">No data available yet. Please ensure your site has programs configured.</p>
+            {loadError ? (
+              <>
+                <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-3" />
+                <p className="text-slate-700 font-medium mb-1">Failed to load executive data</p>
+                <p className="text-sm text-slate-500">{loadError}</p>
+              </>
+            ) : (
+              <p className="text-slate-500">No data available yet. Please ensure your site has programs configured.</p>
+            )}
             <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>Retry</Button>
           </CardContent></Card>
         </div>

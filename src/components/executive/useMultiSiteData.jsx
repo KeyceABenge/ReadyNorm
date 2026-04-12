@@ -4,7 +4,88 @@
  */
 import { useState, useEffect, useMemo, useRef } from "react";
 import { invokeFunction } from "@/lib/adapters/functions";
+import { supabase } from "@/api/supabaseClient";
 import { subDays } from "date-fns";
+
+/**
+ * Client-side fallback: fetch executive data directly from Supabase
+ * when the edge function is not deployed or unavailable.
+ */
+async function fetchDirectFromSupabase(siteCode) {
+  // 1. Resolve the current organization from siteCode
+  const { data: orgRows, error: orgErr } = await supabase
+    .from('organizations')
+    .select('*')
+    .eq('site_code', siteCode)
+    .limit(1);
+
+  if (orgErr) throw new Error(`Failed to look up organization: ${orgErr.message}`);
+  const currentOrg = orgRows?.[0];
+  if (!currentOrg) throw new Error(`No organization found for site code "${siteCode}"`);
+
+  // 2. Get org group and all sites
+  let orgGroup = null;
+  let orgGroupSites = [currentOrg];
+
+  if (currentOrg.org_group_id) {
+    const { data: groupRows } = await supabase
+      .from('organization_groups')
+      .select('*')
+      .eq('id', currentOrg.org_group_id)
+      .limit(1);
+    orgGroup = groupRows?.[0] || null;
+
+    if (orgGroup) {
+      const { data: sites } = await supabase
+        .from('organizations')
+        .select('*')
+        .eq('org_group_id', orgGroup.id);
+      if (sites?.length) orgGroupSites = sites;
+    }
+  }
+
+  const orgIds = orgGroupSites.map(s => s.id);
+
+  // 3. Fetch entity data in parallel
+  const failures = [];
+  async function fetchEntity(name, table) {
+    try {
+      const { data, error } = await supabase
+        .from(table)
+        .select('*')
+        .in('organization_id', orgIds)
+        .limit(2000);
+      if (error) throw error;
+      return (data || []).map(row => ({ ...row, _org_id: row.organization_id }));
+    } catch (e) {
+      console.warn(`[ECC-fallback] Failed to fetch ${name}:`, e.message);
+      failures.push({ entity: name, error: e.message });
+      return [];
+    }
+  }
+
+  const [tasks, capas, auditFindings, empSamples, empSites, pestFindings, pestEscalationMarkers, complaints, risks, areaSignOffs, siteSettings] = await Promise.all([
+    fetchEntity('tasks', 'tasks'),
+    fetchEntity('capas', 'capas'),
+    fetchEntity('auditFindings', 'audit_findings'),
+    fetchEntity('empSamples', 'emp_samples'),
+    fetchEntity('empSites', 'emp_sites'),
+    fetchEntity('pestFindings', 'pest_findings'),
+    fetchEntity('pestEscalationMarkers', 'pest_escalation_markers'),
+    fetchEntity('complaints', 'customer_complaints'),
+    fetchEntity('risks', 'risk_entries'),
+    fetchEntity('areaSignOffs', 'area_sign_offs'),
+    fetchEntity('siteSettings', 'site_settings'),
+  ]);
+
+  return {
+    currentOrg,
+    orgGroup,
+    orgGroupSites,
+    rawData: { tasks, capas, auditFindings, empSamples, empSites, pestFindings, pestEscalationMarkers, complaints, risks, areaSignOffs, siteSettings },
+    _meta: { fetchedAt: new Date().toISOString(), siteCount: orgGroupSites.length, failures, source: 'client-direct' },
+  };
+}
 
 /**
  * Compute quality/safety metrics from raw entity arrays.
@@ -107,14 +188,27 @@ export function useExecutiveData(siteCode) {
       setIsLoading(true);
       setLoadError(null);
       try {
+        let result;
+
+        // Try edge function first
         console.log("[ECC] Calling backend function for siteCode:", siteCode);
         const response = await invokeFunction("fetchExecutiveData", { siteCode });
-        
+
+        if (response.status >= 200 && response.status < 300 && response.data?.rawData) {
+          result = response.data;
+          console.log("[ECC] Edge function succeeded");
+        } else {
+          // Edge function failed — fall back to client-side direct fetch
+          const reason = response.data?.error || `HTTP ${response.status}`;
+          console.warn("[ECC] Edge function failed (", reason, "), falling back to client-side fetch");
+          result = await fetchDirectFromSupabase(siteCode);
+        }
+
         // Only update state if this is still the latest load
         if (thisLoadId !== loadIdRef.current) return;
 
-        const { currentOrg: org, orgGroup: group, orgGroupSites: sites, rawData: data, _meta } = response.data;
-        
+        const { currentOrg: org, orgGroup: group, orgGroupSites: sites, rawData: data, _meta } = result;
+
         setCurrentOrg(org);
         setOrgGroup(group);
         setOrgGroupSites(sites || []);

@@ -2,7 +2,6 @@
  * DATABASE ADAPTER — Full Supabase implementation.
  * 
  * ALL entities now routed to Supabase PostgreSQL.
- * Base44 fallback has been REMOVED.
  * 
  * API contract (unchanged for all consumers):
  *   repo.list(sort, limit)
@@ -196,7 +195,7 @@ const TABLE_MAP = {
   UserDashboardConfig: "user_dashboard_configs",
 };
 
-// Parse Base44-style sort: "-created_date" → { column: "created_date", ascending: false }
+// Parse sort: "-created_date" → { column: "created_date", ascending: false }
 function parseSort(sort) {
   if (!sort) return null;
   const desc = sort.startsWith("-");
@@ -270,14 +269,14 @@ function warnMissingOrgFilter(tableName, filters) {
   }
 }
 
-// Apply Base44-style filter object to a Supabase query
+// Apply -style filter object to a Supabase query
 function applyFilters(query, filters) {
   if (!filters) return query;
   for (const [key, value] of Object.entries(filters)) {
     if (value === undefined || value === null) continue;
     // Guard: skip ONLY if a value LOOKS like a malformed UUID (has dashes, 32+ chars,
     // but fails the UUID regex). This prevents 22P02 errors on UUID columns while
-    // still allowing valid TEXT primary keys (24-char hex Base44 ObjectIds).
+    // still allowing valid TEXT primary keys (24-char hex  ObjectIds).
     // Note: the filter() method already returns [] on 22P02 as a safety net.
     if ((key === 'id' || key.endsWith('_id')) &&
         typeof value === 'string' &&
@@ -369,7 +368,7 @@ function createSupabaseRepository(tableName) {
       const { data, error } = await q;
       if (error) {
         logDbError(tableName, 'filter', error, query);
-        // 22P02   = invalid UUID cast (legacy Base44 ObjectId in JWT/data)
+        // 22P02   = invalid UUID cast (legacy ObjectId in JWT/data)
         // PGRST205 = table doesn't exist yet in Supabase
         // PGRST204 / 42703 = column doesn't exist (schema not yet migrated)
         if (error.code === '22P02' || error.code === 'PGRST205' || error.code === 'PGRST204' || error.code === '42703') return [];

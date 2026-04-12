@@ -1,13 +1,11 @@
 /**
  * File proxy utilities — Supabase Edge Functions.
- * Maps legacy media URLs (from old Base44 hosting) to local assets.
  * New files from Supabase Storage pass through unchanged.
  */
 
 const SUPABASE_URL = "https://zamrusolomzustgenpin.supabase.co";
 const FILE_PROXY_OPT_IN_KEY = "use_file_proxy";
-
-const BLOCKED_DOMAINS = ['media.base44.com'];
+const BLOCKED_DOMAINS = ["cdn.base44.com", "base44.com"];
 
 function needsProxy(url) {
   if (!url) return false;
@@ -20,18 +18,17 @@ function needsProxy(url) {
   }
 }
 
-function mapLegacyBase44Asset(url) {
+function mapLegacyUrl(url) {
   if (!url) return url;
   try {
     const parsed = new URL(url);
-    if (parsed.hostname !== 'media.base44.com') return url;
+    if (!BLOCKED_DOMAINS.includes(parsed.hostname)) return url;
 
     const path = parsed.pathname.toLowerCase();
     if (path.includes('readynormnewlogosidewaystext')) return '/readynorm-logo-sideways.svg';
     if (path.includes('readynormnewlogowithtext')) return '/readynorm-logo-main.svg';
     if (path.includes('digitalsignaturereadynormalplaceholder')) return '/readynorm-logo-main.svg';
 
-    // Generic fallback for any remaining legacy Base44 asset.
     return '/readynorm-logo-main.svg';
   } catch {
     return url;
@@ -59,7 +56,7 @@ export function isExternalUrl(url) {
 
 export function getProxiedImageUrl(url) {
   if (!url) return "";
-  const mappedUrl = mapLegacyBase44Asset(url);
+  const mappedUrl = mapLegacyUrl(url);
   if (needsProxy(mappedUrl) && isFileProxyEnabled()) {
     return `${SUPABASE_URL}/functions/v1/fileProxy?url=${encodeURIComponent(mappedUrl)}`;
   }
@@ -72,7 +69,7 @@ export function getProxiedFileUrl(url) {
 
 export function getProxiedDownloadUrl(url, filename) {
   if (!url) return "";
-  const mappedUrl = mapLegacyBase44Asset(url);
+  const mappedUrl = mapLegacyUrl(url);
   if (needsProxy(mappedUrl) && isFileProxyEnabled()) {
     let downloadUrl = `${SUPABASE_URL}/functions/v1/fileProxy?url=${encodeURIComponent(mappedUrl)}&download=true`;
     if (filename) downloadUrl += `&filename=${encodeURIComponent(filename)}`;

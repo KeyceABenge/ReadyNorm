@@ -170,6 +170,7 @@ Deno.serve(async (req) => {
       complaints,
       risks,
       areaSignOffs,
+      siteSettings,
     ] = await Promise.all([
       fetchEntity('tasks', 'tasks'),
       fetchEntity('capas', 'capas'),
@@ -181,6 +182,7 @@ Deno.serve(async (req) => {
       fetchEntity('complaints', 'customer_complaints'),
       fetchEntity('risks', 'risk_entries'),
       fetchEntity('areaSignOffs', 'area_sign_offs'),
+      fetchEntity('siteSettings', 'site_settings'),
     ]);
 
     console.log('[fetchExecutiveData] Done. Tasks:', tasks.length,
@@ -203,6 +205,7 @@ Deno.serve(async (req) => {
         complaints,
         risks,
         areaSignOffs,
+        siteSettings,
       },
       _meta: {
         fetchedAt: new Date().toISOString(),

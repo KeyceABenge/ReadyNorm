@@ -209,7 +209,6 @@ export default function Home() {
 
         // If no code, try to resolve from user's org — each path is independent
         // NOTE: status:"active" is intentionally omitted from resolution paths to handle
-        // legacy orgs migrated from Base44 that may not have the status field set.
         let resolvedViaOwnership = false; // true when user is identified as org owner/creator
 
         if (!code && userData) {
@@ -248,7 +247,7 @@ export default function Home() {
           // Path 3: OrganizationGroup.owner_email → Organization.org_group_id
           // Most reliable for org owners — owner_email is always the real email,
           // and the group's id is always a valid Supabase UUID.
-          // Handles legacy orgs where created_by was stored as a Base44 ObjectId.
+          // Handles legacy orgs where created_by was stored as a ObjectId.
           if (!code) {
             try {
               const ownedGroups = await OrganizationGroupRepo.filter({ owner_email: userData.email });

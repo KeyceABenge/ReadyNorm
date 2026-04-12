@@ -7,23 +7,18 @@
  */
 import { supabase } from "@/api/supabaseClient";
 
-/**
- * Invoke a backend function by name with a payload.
- * Uses supabase.functions.invoke() which automatically attaches the user's JWT,
- * handles the sb_publishable_ key format, and refreshes tokens as needed.
- * 
- * @param {string} functionName - Name of the function (e.g. "listOrgUsers")
- * @param {object} [payload={}] - Request body
- * @returns {Promise<{data: any, status: number}>} Axios-compatible response shape
- */
 // Supabase project constants
 const SUPABASE_URL = "https://zamrusolomzustgenpin.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_p-ZZcpZzIqRW1dRNoHT69Q_l8l2XH3Q";
 
 /**
  * Invoke a backend function by name with a payload.
- * Uses raw fetch with the user's session JWT in Authorization.
- * Functions deployed with --no-verify-jwt skip gateway JWT validation
- * and verify auth themselves using the service role key.
+ * Uses raw fetch with the user's session JWT in Authorization
+ * and the anon key in apikey header (required by the Supabase API gateway).
+ *
+ * @param {string} functionName - Name of the function (e.g. "listOrgUsers")
+ * @param {object} [payload={}] - Request body
+ * @returns {Promise<{data: any, status: number}>} Response shape
  */
 export async function invokeFunction(functionName, payload = {}) {
   try {
@@ -36,6 +31,7 @@ export async function invokeFunction(functionName, payload = {}) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
           ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(payload),
