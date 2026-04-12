@@ -15,7 +15,8 @@ import InventoryCountForm from "./InventoryCountForm";
 import InventoryReviewModal from "./InventoryReviewModal";
 
 export default function InventoryRecordsDashboard({ 
-  organizationId, isManager, chemicals, locations, assignments, settings, currentWeekRecord, user 
+  organizationId, isManager, chemicals, locations, assignments, settings, currentWeekRecord, user,
+  onNavigateToSettings
 }) {
   const [countFormOpen, setCountFormOpen] = useState(false);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
@@ -89,6 +90,11 @@ export default function InventoryRecordsDashboard({
         <p className="text-slate-500 mb-4">
           {isManager ? "Enable inventory and add chemicals to get started." : "Inventory tracking is not yet set up."}
         </p>
+        {isManager && onNavigateToSettings && (
+          <Button onClick={onNavigateToSettings} className="bg-slate-900 hover:bg-slate-800">
+            Go to Settings
+          </Button>
+        )}
       </Card>
     );
   }

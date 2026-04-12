@@ -190,6 +190,7 @@ export default function ChemicalInventoryPage() {
               settings={settings}
               currentWeekRecord={currentWeekRecord}
               user={user}
+              onNavigateToSettings={() => setActiveTab("settings")}
             />
           </TabsContent>
 
