@@ -3,16 +3,23 @@ import OpenAI from 'npm:openai@4.52.0';
 
 const openai = new OpenAI({ apiKey: Deno.env.get("OPENAI_API_KEY") });
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, x-client-info',
+};
+
+/** Return a JSON response with CORS headers */
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, x-client-info',
-      },
-    });
+    return new Response(null, { status: 204, headers: corsHeaders });
   }
 
   try {
@@ -23,13 +30,13 @@ Deno.serve(async (req) => {
     const token = (req.headers.get('authorization') || '').replace('Bearer ', '');
     const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !authUser) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return jsonResponse({ error: 'Unauthorized' }, 401);
     }
 
     const { file_url, json_schema } = await req.json();
 
     if (!file_url || !json_schema) {
-      return Response.json({ error: 'file_url and json_schema are required' }, { status: 400 });
+      return jsonResponse({ error: 'file_url and json_schema are required' }, 400);
     }
 
     const lowerUrl = file_url.toLowerCase();
@@ -70,7 +77,7 @@ Deno.serve(async (req) => {
     } else {
       const fileResponse = await fetch(file_url);
       if (!fileResponse.ok) {
-        return Response.json({
+        return jsonResponse({
           status: "error",
           details: `Failed to fetch file: ${fileResponse.status}`,
           output: null
@@ -123,14 +130,14 @@ Deno.serve(async (req) => {
       extractedData = JSON.parse(content);
     }
 
-    return Response.json({
+    return jsonResponse({
       status: "success",
       details: null,
       output: extractedData
     });
   } catch (error) {
     console.error("extractData error:", error);
-    return Response.json({
+    return jsonResponse({
       status: "error",
       details: (error as Error).message,
       output: null
