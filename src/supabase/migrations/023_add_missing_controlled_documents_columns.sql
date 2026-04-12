@@ -76,6 +76,18 @@ ALTER TABLE controlled_documents
 
 
 -- ═══════════════════════════════════════════════════════════════════════════════
+-- AUDIT_STANDARDS — additional columns written by StandardUploadModal
+-- (migration 019 adds total_sections/total_requirements/parsing_status but
+--  these 3 are still missing from the table definition)
+-- ═══════════════════════════════════════════════════════════════════════════════
+ALTER TABLE audit_standards
+  ADD COLUMN IF NOT EXISTS type                    TEXT,
+  ADD COLUMN IF NOT EXISTS color_index             INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS source_document_url     TEXT,
+  ADD COLUMN IF NOT EXISTS status                  TEXT    DEFAULT 'active';
+
+
+-- ═══════════════════════════════════════════════════════════════════════════════
 -- Done.  Run this in Supabase SQL Editor, then retry creating/editing a
 -- controlled document — the "Stripping unknown column" warnings should stop
 -- and all fields will be persisted correctly.

@@ -9,6 +9,8 @@ import { Upload, FileText, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { getNextColorIndex } from "./auditColors";
 import { AuditRequirementRepo, AuditSectionRepo, AuditStandardRepo } from "@/lib/adapters/database";
+import { uploadFile } from "@/lib/adapters/storage";
+import { invokeLLM } from "@/lib/adapters/integrations";
 
 export default function StandardUploadModal({ open, onClose, organization, existingStandards = [], onSuccess }) {
   const [formData, setFormData] = useState({
@@ -42,7 +44,7 @@ export default function StandardUploadModal({ open, onClose, organization, exist
       let fileUrl = null;
       
       if (file) {
-        const uploadResult = await uploadFile({ file });
+        const uploadResult = await uploadFile(file);
         fileUrl = uploadResult.file_url;
       }
 
